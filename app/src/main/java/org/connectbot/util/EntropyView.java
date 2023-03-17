@@ -19,7 +19,7 @@ package org.connectbot.util;
 
 import java.util.ArrayList;
 
-import org.connectbot.R;
+import cz.madeta.droidssh.R;
 import org.connectbot.annotation.KeepForTesting;
 
 import android.content.Context;

@@ -19,6 +19,7 @@ package org.connectbot;
 
 import org.connectbot.util.VolumePreference;
 import org.connectbot.util.VolumePreferenceFragment;
+import cz.madeta.droidssh.R;
 
 import android.os.Bundle;
 import androidx.fragment.app.DialogFragment;

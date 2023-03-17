@@ -32,6 +32,7 @@ import org.connectbot.util.OnEntropyGatheredListener;
 import org.connectbot.util.OnKeyGeneratedListener;
 import org.connectbot.util.PubkeyDatabase;
 import org.connectbot.util.PubkeyUtils;
+import cz.madeta.droidssh.R;
 
 import com.trilead.ssh2.crypto.keys.Ed25519Provider;
 

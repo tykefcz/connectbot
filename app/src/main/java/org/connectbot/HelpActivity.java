@@ -18,6 +18,7 @@
 package org.connectbot;
 
 import org.connectbot.util.Version;
+import cz.madeta.droidssh.R;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;

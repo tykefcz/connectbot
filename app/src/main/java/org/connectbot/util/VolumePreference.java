@@ -17,7 +17,7 @@
 
 package org.connectbot.util;
 
-import org.connectbot.R;
+import cz.madeta.droidssh.R;
 
 import android.content.Context;
 import android.content.res.TypedArray;

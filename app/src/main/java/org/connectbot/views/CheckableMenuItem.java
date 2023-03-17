@@ -19,7 +19,7 @@ package org.connectbot.views;
 
 import java.util.List;
 
-import org.connectbot.R;
+import cz.madeta.droidssh.R;
 
 import android.content.Context;
 import android.content.res.Resources;

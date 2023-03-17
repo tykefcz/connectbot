@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.connectbot.R;
+import cz.madeta.droidssh.R;
 import org.connectbot.TerminalView;
 import org.connectbot.bean.HostBean;
 import org.connectbot.bean.PortForwardBean;
@@ -125,6 +125,15 @@ public class TerminalBridge implements VDUDisplay {
 
 	private BridgeDisconnectedListener disconnectListener = null;
 
+	private int ulCols = 0;
+	private int ulRows = 0;
+	public boolean isCornerMode() {
+		return (ulCols > 0) && (ulRows > 0);
+	}
+	public void setCornerMode(int cols, int rows) {
+		ulCols = cols;
+		ulRows = rows;
+	}
 	/**
 	 * Create a new terminal bridge suitable for unit testing.
 	 */
@@ -611,27 +620,38 @@ public class TerminalBridge implements VDUDisplay {
 			// recalculate buffer size
 			int newColumns, newRows;
 
-			newColumns = width / charWidth;
-			newRows = height / charHeight;
-
+			if (isCornerMode()) {
+				// ToDo CornerMode real size config
+				newColumns = 80;
+				newRows = 24;
+			} else {
+				newColumns = width / charWidth;
+				newRows = height / charHeight;
+				if (newColumns == columns && newRows == rows)
+					return;
+			}
 			// If nothing has changed in the terminal dimensions and not an intial
 			// draw then don't blow away scroll regions and such.
-			if (newColumns == columns && newRows == rows)
-				return;
 
 			columns = newColumns;
 			rows = newRows;
 			refreshOverlayFontSize();
 		}
-
+		int bmpwid=width,bmphei = height;
+		if (isCornerMode()) {
+			if (ulCols < columns)
+				bmpwid = width * columns / ulCols;
+			if (ulRows < rows)
+				bmphei = height * rows / ulRows;
+		}
 		// reallocate new bitmap if needed
 		boolean newBitmap = (bitmap == null);
 		if (bitmap != null)
-			newBitmap = (bitmap.getWidth() != width || bitmap.getHeight() != height);
+			newBitmap = (bitmap.getWidth() != bmpwid || bitmap.getHeight() != bmphei);
 
 		if (newBitmap) {
 			discardBitmap();
-			bitmap = Bitmap.createBitmap(width, height, Config.ARGB_8888);
+			bitmap = Bitmap.createBitmap(bmpwid, bmphei, Config.ARGB_8888);
 			canvas.setBitmap(bitmap);
 		}
 
@@ -659,7 +679,7 @@ public class TerminalBridge implements VDUDisplay {
 			}
 
 			if (transport != null)
-				transport.setDimensions(columns, rows, width, height);
+				transport.setDimensions(columns, rows, bmpwid, bmphei);
 		} catch (Exception e) {
 			Log.e(TAG, "Problem while trying to resize screen or PTY", e);
 		}
@@ -678,9 +698,16 @@ public class TerminalBridge implements VDUDisplay {
 		fullRedraw = true;
 		redraw();
 
-		parent.notifyUser(String.format("%d x %d", columns, rows));
+		try {Log.d(TAG,String.format("parentChanged parent->buffer w:%d->%d(%d/%d) h:%d->%d(%d/%d) ",
+				width,bmpwid,ulCols,columns,height,bmphei,ulRows,rows));}
+		catch (Exception e) {Log.e(TAG,e.toString());}
 
-		Log.i(TAG, String.format("parentChanged() now width=%d, height=%d", columns, rows));
+		if (isCornerMode())
+			parent.notifyUser(String.format("%d x %d (visible:%d x %d)", columns, rows,ulCols,ulRows));
+		else
+			parent.notifyUser(String.format("%d x %d", columns, rows));
+
+		Log.i(TAG, String.format("parentChanged() now width=%d(%d), height=%d(%d)", columns,ulCols, rows,ulRows));
 	}
 
 	/**
@@ -848,8 +875,14 @@ public class TerminalBridge implements VDUDisplay {
 		float limit = 0.125f;
 
 		int direction;
-
-		while ((direction = fontSizeCompare(sizeDp, cols, rows, width, height)) < 0)
+		int wcols = cols, wrows = rows;
+		if (isCornerMode()) {
+			if (wcols > ulCols)
+				wcols = ulCols;
+			if (wrows > ulRows)
+				wrows = ulRows;
+		}
+		while ((direction = fontSizeCompare(sizeDp, wcols, wrows, width, height)) < 0)
 			sizeDp += step;
 
 		if (direction == 0) {
@@ -860,7 +893,7 @@ public class TerminalBridge implements VDUDisplay {
 		step /= 2.0f;
 		sizeDp -= step;
 
-		while ((direction = fontSizeCompare(sizeDp, cols, rows, width, height)) != 0
+		while ((direction = fontSizeCompare(sizeDp, wcols, wrows, width, height)) != 0
 				&& step >= limit) {
 			step /= 2.0f;
 			if (direction > 0) {

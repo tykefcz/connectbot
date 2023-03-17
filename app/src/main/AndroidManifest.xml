@@ -16,7 +16,7 @@
  limitations under the License.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="org.connectbot"
+	package="cz.madeta.droidssh"
 	android:installLocation="auto">
 
 	<uses-sdk />
@@ -40,7 +40,7 @@
 
 	<application
 		android:allowBackup="true"
-		android:backupAgent=".service.BackupAgent"
+		android:backupAgent="org.connectbot.service.BackupAgent"
 		android:description="@string/app_desc"
 		android:icon="@mipmap/icon"
 		android:killAfterRestore="true"
@@ -54,7 +54,7 @@
 			android:value="2.1" />
 
 		<activity
-			android:name=".HostListActivity"
+			android:name="org.connectbot.HostListActivity"
 			android:launchMode="singleTop"
 			android:resizeableActivity="true"
 			android:exported="true">
@@ -77,7 +77,7 @@
 		</activity>
 
 		<activity
-			android:name=".PubkeyListActivity"
+			android:name="org.connectbot.PubkeyListActivity"
 			android:configChanges="keyboardHidden|orientation"
 			android:label="@string/title_pubkey_list">
 
@@ -87,7 +87,7 @@
 		</activity>
 
 		<activity
-			android:name=".GeneratePubkeyActivity"
+			android:name="org.connectbot.GeneratePubkeyActivity"
 			android:configChanges="keyboardHidden|orientation"
 			android:label="@string/title_pubkey_generate">
 
@@ -97,7 +97,7 @@
 		</activity>
 
 		<activity
-				android:name=".EditHostActivity"
+				android:name="org.connectbot.EditHostActivity"
 				android:label="@string/title_host_editor">
 
 			<meta-data
@@ -106,7 +106,7 @@
 		</activity>
 
 		<activity
-			android:name=".PortForwardListActivity"
+			android:name="org.connectbot.PortForwardListActivity"
 			android:configChanges="keyboardHidden|orientation"
 			android:label="@string/title_port_forwards_list">
 
@@ -116,7 +116,7 @@
 		</activity>
 
 		<activity
-			android:name=".SettingsActivity"
+			android:name="org.connectbot.SettingsActivity"
 			android:configChanges="keyboardHidden|orientation"
 			android:label="@string/title_settings">
 
@@ -126,7 +126,7 @@
 		</activity>
 
 		<activity
-			android:name=".HelpActivity"
+			android:name="org.connectbot.HelpActivity"
 			android:configChanges="keyboardHidden|orientation"
 			android:label="@string/title_help">
 
@@ -136,7 +136,7 @@
 		</activity>
 
 		<activity
-			android:name=".ColorsActivity"
+			android:name="org.connectbot.ColorsActivity"
 			android:configChanges="keyboardHidden|orientation"
 			android:label="@string/title_colors">
 
@@ -146,7 +146,7 @@
 		</activity>
 
 		<activity
-			android:name=".EulaActivity"
+			android:name="org.connectbot.EulaActivity"
 			android:configChanges="keyboardHidden|orientation"
 			android:label="@string/terms_and_conditions">
 
@@ -156,7 +156,7 @@
 		</activity>
 
 		<activity
-			android:name=".HintsActivity"
+			android:name="org.connectbot.HintsActivity"
 			android:label="@string/hints">
 
 			<meta-data
@@ -170,7 +170,7 @@
 			android:description="@string/service_desc"/>
 
 		<activity
-			android:name=".ConsoleActivity"
+			android:name="org.connectbot.ConsoleActivity"
 			android:configChanges="keyboardHidden|orientation"
 			android:launchMode="singleTop"
 			android:theme="@style/Theme.AppCompat"

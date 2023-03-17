@@ -28,6 +28,7 @@ import org.connectbot.service.TerminalKeyListener;
 import org.connectbot.util.PreferenceConstants;
 import org.connectbot.util.TerminalTextViewOverlay;
 import org.connectbot.util.TerminalViewPager;
+import cz.madeta.droidssh.R;
 
 import android.app.Activity;
 import android.content.ContentResolver;
@@ -43,11 +44,13 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.text.ClipboardManager;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
@@ -73,6 +76,7 @@ import de.mud.terminal.vt320;
  * @author jsharkey
  */
 public class TerminalView extends FrameLayout implements FontSizeChangedListener {
+	private final String tag = "ConBotTermView";
 	private final Context context;
 	public final TerminalBridge bridge;
 
@@ -121,7 +125,20 @@ public class TerminalView extends FrameLayout implements FontSizeChangedListener
 	private static final int ACCESSIBILITY_EVENT_THRESHOLD = 1000;
 	private static final String SCREENREADER_INTENT_ACTION = "android.accessibilityservice.AccessibilityService";
 	private static final String SCREENREADER_INTENT_CATEGORY = "android.accessibilityservice.category.FEEDBACK_SPOKEN";
-
+	private int ulCols = 0;
+	private int ulRows = 0;
+	public boolean isCornerMode() {
+		return (ulCols > 0) && (ulRows > 0);
+	}
+	public void setCornerMode(int cols, int rows) {
+		ulCols = cols;
+		ulRows = rows;
+		if (bridge!=null) {
+			bridge.setCornerMode(cols, rows);
+			forceSize(80,25);
+		}
+		onFontSizeChanged(0); // the argument is unused
+	}
 	public TerminalView(Context context, TerminalBridge bridge, TerminalViewPager pager) {
 		super(context);
 
@@ -271,6 +288,8 @@ public class TerminalView extends FrameLayout implements FontSizeChangedListener
 
 		// Enable accessibility features if a screen reader is active.
 		new AccessibilityStateTester().execute((Void) null);
+		try {Log.d("ConBotTermView",String.format("New TerminlaView UL=%dx%d view %dx%d scale=%s", ulCols, ulRows,getWidth(),getHeight(),scaleMatrix.toString()));}
+		catch (Exception e) {Log.e(tag,e.toString());}
 	}
 
 	private void setLayerTypeToSoftware() {
@@ -370,18 +389,27 @@ public class TerminalView extends FrameLayout implements FontSizeChangedListener
 		bridge.parentChanged(this);
 
 		scaleCursors();
+		try {Log.d(tag,String.format("onSizeChanged bridge=%.1f ul=%dx%d scale=%s",bridge.getTextSizePx(), ulCols, ulRows,scaleMatrix.toString()));}
+		catch (Exception e) {Log.e(tag,e.toString());}
 	}
 
 	@Override
 	public void onFontSizeChanged(final float unusedSizeDp) {
 		scaleCursors();
-
 		((Activity) context).runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				if (terminalTextViewOverlay != null) {
 					// Use the bridge text size in pixels to have exactly the same text size.
-					terminalTextViewOverlay.setTextSize(TypedValue.COMPLEX_UNIT_PX, bridge.getTextSizePx());
+					try {Log.d(tag,String.format("onFontSizeChanged bridge=%.1f ul=%dx%d oldtextsize=%.2f",bridge.getTextSizePx(), ulCols, ulRows,terminalTextViewOverlay.getTextSize()));}
+					catch (Exception e) {Log.e(tag,e.toString());}
+					if (ulCols > 0 && ulRows > 0 ) {
+						// tempDst.set(0.0f, 0.0f, ulWidth, ulHeight);
+						terminalTextViewOverlay.setTextSize(TypedValue.COMPLEX_UNIT_PX, bridge.getTextSizePx() * 80.0f / ulCols);
+					} else
+						terminalTextViewOverlay.setTextSize(TypedValue.COMPLEX_UNIT_PX, bridge.getTextSizePx());
+					try {Log.d(tag,String.format("onFontSizeChanged new textsize = %.2f",terminalTextViewOverlay.getTextSize()));}
+					catch (Exception e) {Log.e(tag,e.toString());}
 
 					// For the TextView to line up with the bitmap text, lineHeight must be equal to
 					// the bridge's charHeight. See TextView.getLineHeight(), which has been reversed to
@@ -399,14 +427,30 @@ public class TerminalView extends FrameLayout implements FontSizeChangedListener
 		scaleMatrix.setRectToRect(tempSrc, tempDst, scaleType);
 	}
 
+	String lastlog = "";
 	@Override
 	public void onDraw(Canvas canvas) {
 		if (bridge.bitmap != null) {
 			// draw the bitmap
 			bridge.onDraw();
-
+			try {
+				String x = String.format("onDraw br=%dx%d -> %dx%d",bridge.bitmap.getWidth(),bridge.bitmap.getHeight(),
+					canvas.getWidth(),canvas.getHeight());
+				if (!x.equals(lastlog)) {
+					lastlog = x;
+					Log.d(tag, x);
+				}
+			} catch (Exception e) {Log.e(tag,e.toString());}
 			// draw the bridge bitmap if it exists
-			canvas.drawBitmap(bridge.bitmap, 0, 0, paint);
+			if (ulCols > 0 && ulRows > 0 ) {
+				Rect pix2pix =  new Rect(0, 0, canvas.getWidth(), canvas.getHeight());
+				if (bridge.bitmap.getWidth() < canvas.getWidth())
+					pix2pix.right = bridge.bitmap.getWidth();
+				if (bridge.bitmap.getHeight() < canvas.getHeight())
+					pix2pix.bottom = bridge.bitmap.getHeight();
+				canvas.drawBitmap(bridge.bitmap, pix2pix, pix2pix, paint);
+			} else
+				canvas.drawBitmap(bridge.bitmap, 0, 0,paint);
 
 			// also draw cursor if visible
 			if (bridge.buffer.isCursorVisible()) {
@@ -518,7 +562,13 @@ public class TerminalView extends FrameLayout implements FontSizeChangedListener
 	 * @param height heigh in characters
 	 */
 	public void forceSize(int width, int height) {
-		bridge.resizeComputed(width, height, getWidth(), getHeight());
+		if (ulRows > 0 && ulCols > 0) {
+			int bmphei= ulRows,bmpwid= ulCols;
+			if (ulRows < height) bmphei = height;
+			if (ulCols < width) bmpwid = width;
+			bridge.resizeComputed(width, height, getWidth() * width / bmpwid, getHeight() * height / bmphei);
+		} else
+			bridge.resizeComputed(width, height, getWidth(), getHeight());
 	}
 
 	/**

@@ -7,7 +7,7 @@ buildscript {
 }
 
 plugins {
-	id 'com.android.application' version '7.2.2'
+	id 'com.android.application' // version '7.2.2'
 	id 'com.github.ben-manes.versions' version '0.46.0'
 	id 'net.ltgt.errorprone' version '3.0.1'
 	id 'com.gladed.androidgitversion' version '0.4.14'
@@ -37,7 +37,7 @@ android {
 
 	defaultConfig {
 		applicationId "org.connectbot"
-		versionName androidGitVersion.name()
+		versionName 'madeta'
 		versionCode androidGitVersion.code()
 
 		minSdkVersion 14
@@ -51,6 +51,8 @@ android {
 
 		testApplicationId "org.connectbot.tests"
 		testInstrumentationRunner "org.connectbot.ConnectbotJUnitRunner"
+		versionNameSuffix '1'
+		signingConfig signingConfigs.debug
 
 		// The following argument makes the Android Test Orchestrator run its
 		// "pm clear" command after each test invocation. This command ensures
@@ -59,6 +61,12 @@ android {
 	}
 
 	signingConfigs {
+		debug {
+			storeFile file('/home/gabriel/AndroidStudioProjects/klic.jks')
+			storePassword 'kaliban258'
+			keyAlias 'tykefcz'
+			keyPassword 'kaliban258'
+		}
 		if (project.hasProperty('keystorePassword')) {
 			release {
 				storeFile file(property('keystoreFile'))
@@ -73,6 +81,7 @@ android {
 			shrinkResources true
 			minifyEnabled true
 			proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard.cfg'
+			signingConfig signingConfigs.debug
 
 			if (project.hasProperty('keystorePassword')) {
 				//noinspection GroovyAssignabilityCheck
@@ -89,6 +98,7 @@ android {
 
 			applicationIdSuffix ".debug"
 			testCoverageEnabled true
+			signingConfig signingConfigs.debug
 		}
 	}
 
@@ -122,6 +132,7 @@ android {
 	lintOptions {
 		abortOnError false
 		lintConfig file('lint.xml')
+		checkReleaseBuilds false
 	}
 
 	packagingOptions {

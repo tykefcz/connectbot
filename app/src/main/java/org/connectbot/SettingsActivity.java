@@ -19,6 +19,7 @@ package org.connectbot;
 
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
+import cz.madeta.droidssh.R;
 
 public class SettingsActivity extends AppCompatActivity {
 	@Override

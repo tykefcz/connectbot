@@ -42,6 +42,7 @@ import org.connectbot.service.TerminalBridge;
 import org.connectbot.service.TerminalManager;
 import org.connectbot.util.HostDatabase;
 import org.connectbot.util.PubkeyDatabase;
+import cz.madeta.droidssh.R;
 
 public class EditHostActivity extends AppCompatActivity implements HostEditorFragment.Listener {
 

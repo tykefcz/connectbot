@@ -23,7 +23,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
 
-import org.connectbot.R;
+import cz.madeta.droidssh.R;
 import org.connectbot.bean.HostBean;
 import org.connectbot.util.HostDatabase;
 

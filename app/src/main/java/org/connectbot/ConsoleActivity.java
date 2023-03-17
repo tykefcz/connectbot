@@ -29,6 +29,8 @@ import org.connectbot.service.TerminalKeyListener;
 import org.connectbot.service.TerminalManager;
 import org.connectbot.util.PreferenceConstants;
 import org.connectbot.util.TerminalViewPager;
+import cz.madeta.droidssh.R;
+import cz.madeta.droidssh.BuildConfig;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
@@ -254,7 +256,7 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 
 		@Override
 		public boolean onTouch(View v, MotionEvent event) {
-			if (BuildConfig.DEBUG) {
+			if (cz.madeta.droidssh.BuildConfig.DEBUG) {
 				Log.d(TAG, "KeyRepeater.onTouch(" + v.getId() + ", " +
 						event.getAction() + ", " +
 						event.getActionIndex() + ", " +
@@ -1293,6 +1295,9 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 			final TerminalView terminal = new TerminalView(container.getContext(), bridge, pager);
 			terminal.setId(R.id.terminal_view);
 			view.addView(terminal, 0);
+			try {Log.d(TAG,"instantitem host=" + bridge.host.toString());} catch (Exception e) {}
+			if (bridge.host.getProtocol().equals("ssh"))
+				terminal.setCornerMode(22, 14);
 
 			// Tag the view with its bridge so it can be retrieved later.
 			view.setTag(bridge);

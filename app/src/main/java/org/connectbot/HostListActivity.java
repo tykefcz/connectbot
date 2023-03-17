@@ -56,6 +56,7 @@ import org.connectbot.service.TerminalManager;
 import org.connectbot.transport.TransportFactory;
 import org.connectbot.util.HostDatabase;
 import org.connectbot.util.PreferenceConstants;
+import cz.madeta.droidssh.R;
 
 import java.util.List;
 

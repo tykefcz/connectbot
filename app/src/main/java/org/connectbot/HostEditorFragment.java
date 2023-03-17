@@ -47,6 +47,7 @@ import org.connectbot.transport.Telnet;
 import org.connectbot.transport.TransportFactory;
 import org.connectbot.util.HostDatabase;
 import org.connectbot.views.CheckableMenuItem;
+import cz.madeta.droidssh.R;
 
 public class HostEditorFragment extends Fragment {
 

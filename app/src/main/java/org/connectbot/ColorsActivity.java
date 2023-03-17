@@ -24,6 +24,7 @@ import org.connectbot.util.Colors;
 import org.connectbot.util.HostDatabase;
 import org.connectbot.util.UberColorPickerDialog;
 import org.connectbot.util.UberColorPickerDialog.OnColorChangedListener;
+import cz.madeta.droidssh.R;
 
 import android.content.Context;
 import android.graphics.Canvas;

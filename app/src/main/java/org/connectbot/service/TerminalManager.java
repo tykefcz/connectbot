@@ -29,7 +29,7 @@ import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.connectbot.R;
+import cz.madeta.droidssh.R;
 import org.connectbot.bean.HostBean;
 import org.connectbot.bean.PubkeyBean;
 import org.connectbot.data.ColorStorage;

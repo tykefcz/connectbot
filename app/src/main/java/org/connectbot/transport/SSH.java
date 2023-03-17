@@ -47,7 +47,7 @@ import java.util.regex.Pattern;
 import com.trilead.ssh2.crypto.keys.Ed25519PrivateKey;
 import com.trilead.ssh2.crypto.keys.Ed25519PublicKey;
 import com.trilead.ssh2.crypto.keys.Ed25519Provider;
-import org.connectbot.R;
+import cz.madeta.droidssh.R;
 import org.connectbot.bean.HostBean;
 import org.connectbot.bean.PortForwardBean;
 import org.connectbot.bean.PubkeyBean;

@@ -37,6 +37,7 @@ import org.connectbot.service.TerminalManager;
 import org.connectbot.util.PubkeyDatabase;
 import org.connectbot.util.PubkeyUtils;
 import org.openintents.intents.FileManagerIntents;
+import cz.madeta.droidssh.R;
 
 import com.trilead.ssh2.crypto.Base64;
 import com.trilead.ssh2.crypto.PEMDecoder;

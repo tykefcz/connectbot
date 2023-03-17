@@ -25,6 +25,7 @@ import org.connectbot.bean.PortForwardBean;
 import org.connectbot.service.TerminalBridge;
 import org.connectbot.service.TerminalManager;
 import org.connectbot.util.HostDatabase;
+import cz.madeta.droidssh.R;
 
 import android.annotation.SuppressLint;
 import android.content.ComponentName;

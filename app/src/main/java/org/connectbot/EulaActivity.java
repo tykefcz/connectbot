@@ -21,6 +21,7 @@ import org.connectbot.util.Version;
 
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
+import cz.madeta.droidssh.R;
 
 public class EulaActivity extends AppCompatActivity {
 

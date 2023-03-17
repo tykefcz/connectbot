@@ -19,7 +19,7 @@ package org.connectbot.service;
 
 import org.connectbot.ConsoleActivity;
 import org.connectbot.HostListActivity;
-import org.connectbot.R;
+import cz.madeta.droidssh.R;
 import org.connectbot.bean.HostBean;
 import org.connectbot.util.HostDatabase;
 

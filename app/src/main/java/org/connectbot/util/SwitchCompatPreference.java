@@ -16,7 +16,7 @@
  */
 package org.connectbot.util;
 
-import org.connectbot.R;
+import cz.madeta.droidssh.R;
 
 import android.annotation.TargetApi;
 import android.content.Context;
