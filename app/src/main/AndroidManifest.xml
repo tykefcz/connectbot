@@ -55,6 +55,7 @@
 
 		<activity
 			android:name="org.connectbot.HostListActivity"
+			android:lockTaskMode="if_whitelisted"
 			android:launchMode="singleTop"
 			android:resizeableActivity="true"
 			android:exported="true">
@@ -175,6 +176,7 @@
 			android:launchMode="singleTop"
 			android:theme="@style/Theme.AppCompat"
 			android:windowSoftInputMode="stateAlwaysVisible|adjustResize"
+			android:lockTaskMode="if_whitelisted"
 			android:exported="true">
 			<intent-filter>
 				<action android:name="android.intent.action.VIEW"/>
@@ -183,7 +185,7 @@
 				<category android:name="android.intent.category.BROWSABLE"/>
 
 				<data android:scheme="ssh"/>
-				<data android:scheme="telnet"/>
+				<!-- <data android:scheme="telnet"/> -->
 				<data android:scheme="local"/>
 				<!-- format:  ssh://user@host:port/#nickname  -->
 				<!-- format:  telnet://host:port/#nickname  -->

@@ -67,6 +67,7 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 import de.mud.terminal.VDUBuffer;
 import de.mud.terminal.vt320;
+import com.honeywell.osservice.sdk.DeviceManager;
 
 /**
  * User interface {@link View} for showing a TerminalBridge in an

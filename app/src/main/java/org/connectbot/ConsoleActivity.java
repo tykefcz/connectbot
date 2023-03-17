@@ -1296,8 +1296,10 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 			terminal.setId(R.id.terminal_view);
 			view.addView(terminal, 0);
 			try {Log.d(TAG,"instantitem host=" + bridge.host.toString());} catch (Exception e) {}
-			if (bridge.host.getProtocol().equals("ssh"))
+			if (bridge.host.getProtocol().equals("ssh")) {
+				pager.setEnabled(false);
 				terminal.setCornerMode(22, 14);
+			}
 
 			// Tag the view with its bridge so it can be retrieved later.
 			view.setTag(bridge);

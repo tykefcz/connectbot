@@ -40,7 +40,7 @@ android {
 		versionName 'madeta'
 		versionCode androidGitVersion.code()
 
-		minSdkVersion 14
+		minSdkVersion 24
 		targetSdkVersion 31
 
 		vectorDrawables.useSupportLibrary = true
@@ -243,6 +243,8 @@ dependencyUpdates {
 // Dependencies must be below the android block to allow productFlavor specific deps.
 dependencies {
 	implementation 'org.connectbot:sshlib:2.2.21'
+	implementation files('libs/androidscannersdk.aar')
+	implementation files('libs/hax-os-sdk-01.04.00.1188.jar')
 	googleImplementation 'com.google.android.gms:play-services-basement:18.1.0'
 	ossImplementation 'org.conscrypt:conscrypt-android:2.5.2'
 
