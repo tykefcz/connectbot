@@ -22,7 +22,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.util.Log;
 import android.widget.TextView;
-import com.honeywell.osservice.sdk.DeviceManager;
+
 public class Version {
 	public static final String TAG = "CB/EulaActivity";
 
@@ -32,6 +32,8 @@ public class Version {
 	public static void setVersionText(Context context, TextView textView) {
 		try {
 			PackageInfo pi = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+			textView.setText(pi.versionName);
+/*
 			DeviceManager dm = null;
 			try {dm = DeviceManager.getInstance(context);} catch (Exception e) {}
 			if (dm != null && dm.isReady()) try {
@@ -40,6 +42,8 @@ public class Version {
 				textView.setText(pi.versionName);
 			} else
 				textView.setText(pi.versionName);
+
+ */
 		} catch (PackageManager.NameNotFoundException e) {
 			Log.i(TAG, "Couldn't get my own package info for some reason");
 		}

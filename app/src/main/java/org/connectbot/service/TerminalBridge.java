@@ -50,7 +50,6 @@ import de.mud.terminal.VDUBuffer;
 import de.mud.terminal.VDUDisplay;
 import de.mud.terminal.vt320;
 
-
 /**
  * Provides a bridge between a MUD terminal buffer and a possible TerminalView.
  * This separation allows us to keep the TerminalBridge running in a background
@@ -401,6 +400,11 @@ public class TerminalBridge implements VDUDisplay {
 		injectStringThread.start();
 	}
 
+	public void setAnswerBack(String a) {
+		((vt320) buffer).setAnswerBack(a);
+		((vt320) buffer).setBackspace(2);
+
+	}
 	/**
 	 * Internal method to request actual PTY terminal once we've finished
 	 * authentication. If called before authenticated, it will just fail.

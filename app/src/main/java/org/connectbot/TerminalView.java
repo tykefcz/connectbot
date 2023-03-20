@@ -67,7 +67,6 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 import de.mud.terminal.VDUBuffer;
 import de.mud.terminal.vt320;
-import com.honeywell.osservice.sdk.DeviceManager;
 
 /**
  * User interface {@link View} for showing a TerminalBridge in an
@@ -76,11 +75,11 @@ import com.honeywell.osservice.sdk.DeviceManager;
  *
  * @author jsharkey
  */
+
 public class TerminalView extends FrameLayout implements FontSizeChangedListener {
 	private final String tag = "ConBotTermView";
 	private final Context context;
 	public final TerminalBridge bridge;
-
 	private final TerminalTextViewOverlay terminalTextViewOverlay;
 	public final TerminalViewPager viewPager;
 	private final GestureDetector gestureDetector;
@@ -227,7 +226,15 @@ public class TerminalView extends FrameLayout implements FontSizeChangedListener
 
 		clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
 		prefs = PreferenceManager.getDefaultSharedPreferences(context);
-
+		/* tohle nefungovalo: vždy 0
+		Log.d(tag,"Honeywell??");
+		try {
+			Log.d(tag,"Honeywell processUserId = " + UserHelper.getProcessUserId());
+			// USER_OWNER = 0;  USER_ALL = -1; USER_CURRENT = -2;
+		} catch (Exception e) {
+			Log.d(tag, "Honeywel exc:" + e.toString());
+		}
+        */
 		bridge.addFontSizeChangedListener(this);
 		bridge.parentChanged(this);
 

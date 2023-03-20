@@ -29,6 +29,9 @@ import org.connectbot.service.TerminalKeyListener;
 import org.connectbot.service.TerminalManager;
 import org.connectbot.util.PreferenceConstants;
 import org.connectbot.util.TerminalViewPager;
+
+import android.app.admin.DevicePolicyManager;
+import android.os.Build;
 import cz.madeta.droidssh.R;
 import cz.madeta.droidssh.BuildConfig;
 
@@ -53,6 +56,15 @@ import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import androidx.annotation.Nullable;
 import com.google.android.material.tabs.TabLayout;
+
+// ToDo G Možná zkusit jenom : https://support.honeywellaidc.com/servlet/fileField?entityId=ka02K000000cS1bQAE&field=File_1__Body__s
+import com.honeywell.aidc.AidcManager;
+import com.honeywell.aidc.BarcodeFailureEvent;
+import com.honeywell.aidc.BarcodeReader;
+import com.honeywell.aidc.ScannerNotClaimedException;
+import com.honeywell.aidc.ScannerUnavailableException;
+import com.honeywell.aidc.UnsupportedPropertyException;
+
 import androidx.core.app.ActivityCompat;
 import androidx.core.view.MenuItemCompat;
 import androidx.viewpager.widget.PagerAdapter;
@@ -91,8 +103,15 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import de.mud.terminal.vt320;
 
-public class ConsoleActivity extends AppCompatActivity implements BridgeDisconnectedListener {
+public class ConsoleActivity extends AppCompatActivity implements BridgeDisconnectedListener, BarcodeReader.BarcodeListener {
 	public final static String TAG = "CB.ConsoleActivity";
+	// Honeywell Section
+	private static BarcodeReader bcrd;
+	private AidcManager aidcManager;
+	static BarcodeReader getBarcodeObject() {
+		return bcrd;
+	}
+	// End Honeywell section
 
 	protected static final int REQUEST_EDIT = 1;
 
@@ -567,6 +586,32 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 			}
 		});
 
+		ConsoleActivity lvca = this;
+		AidcManager.create(this, new AidcManager.CreatedCallback() {
+			@Override
+			public void onCreated(AidcManager aidc) {
+				aidcManager = aidc;
+				try {
+					bcrd = aidc.createBarcodeReader();
+					Log.d(TAG,"Honeywell Aidc.BarcodeReader onCreated OK");
+					if (bcrd!=null) {
+						// apply settings
+						try {bcrd.setProperty(BarcodeReader.PROPERTY_CODE_39_ENABLED, false);} catch (UnsupportedPropertyException pe) {}
+						try {bcrd.setProperty(BarcodeReader.PROPERTY_DATAMATRIX_ENABLED, true);} catch (UnsupportedPropertyException pe) {}
+						// set the trigger mode to automatic control
+						try {bcrd.setProperty(BarcodeReader.PROPERTY_TRIGGER_CONTROL_MODE,
+								BarcodeReader.TRIGGER_CONTROL_MODE_AUTO_CONTROL);} catch (UnsupportedPropertyException pe) {}
+						bcrd.addBarcodeListener(lvca);
+						Log.d(TAG,"barcode reader set onCreate");
+						lvca.bcrdClaim();
+					} else
+						Log.d(TAG,"barcode reader is null onCreate");
+				} catch (com.honeywell.aidc.InvalidScannerNameException e) {
+					Log.w(TAG,"Honeywell Aidc.BarcodeReader ex:" + e);
+				}
+			}
+		});
+
 		booleanPromptGroup = findViewById(R.id.console_boolean_group);
 		booleanPrompt = findViewById(R.id.console_prompt);
 
@@ -1028,6 +1073,25 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 		if (forcedOrientation && bound != null) {
 			bound.setResizeAllowed(false);
 		}
+		if (bcrd != null) {
+			try {
+//				bcrd.removeBarcodeListener(this);
+				bcrd.release();
+			} catch(Exception e) {
+				Log.d(TAG,"bcrd ex:" + e);
+			}
+		}
+	}
+	protected void bcrdClaim() {
+		if (bcrd != null) {
+			try {
+				bcrd.claim();
+				Log.d(TAG,"bcrd claimed");
+			} catch(Exception e) {
+				Log.d(TAG,"bcrd ex:",e);
+			}
+		} else
+			Log.d(TAG,"barcode reader is null");
 	}
 
 	@Override
@@ -1048,6 +1112,21 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 		if (forcedOrientation && bound != null) {
 			bound.setResizeAllowed(true);
 		}
+		DevicePolicyManager dpm =
+				(DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+			Log.d(TAG,"PolicyManager isAffiliatedUser=" + dpm.isAffiliatedUser());
+		} else
+			Log.d(TAG,"PolicyManager isAffiliatedUser not enough api level : " + Build.VERSION.SDK_INT);
+		if (dpm.isLockTaskPermitted(getPackageName())) {
+			startLockTask();
+			Log.d(TAG,"LockTask PERMITTED - OK");
+		} else {
+			// Because the package isn't allowlisted, calling startLockTask() here
+			// would put the activity into screen pinning mode.
+			Log.d(TAG,"LockTask not PERMITTED :-(((");
+		}
+		bcrdClaim();
 	}
 
 	/* (non-Javadoc)
@@ -1096,7 +1175,6 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 					requestedIndex = flipIndex;
 				}
 			}
-
 			setDisplayedTerminal(requestedIndex);
 		}
 	}
@@ -1104,7 +1182,9 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 	@Override
 	public void onStop() {
 		super.onStop();
-
+		if (bcrd != null) {
+			bcrd.release();
+		}
 		unbindService(connection);
 	}
 
@@ -1235,6 +1315,7 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 		View terminalNameOverlay = findCurrentView(R.id.terminal_name_overlay);
 		if (terminalNameOverlay != null)
 			terminalNameOverlay.startAnimation(fade_out_delayed);
+
 		updateDefault();
 		updatePromptVisible();
 		ActivityCompat.invalidateOptionsMenu(ConsoleActivity.this);
@@ -1300,10 +1381,8 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 				pager.setEnabled(false);
 				terminal.setCornerMode(22, 14);
 			}
-
 			// Tag the view with its bridge so it can be retrieved later.
 			view.setTag(bridge);
-
 			container.addView(view);
 			terminalNameOverlay.startAnimation(fade_out_delayed);
 			return view;
@@ -1381,4 +1460,36 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 			return (TerminalView) currentView.findViewById(R.id.terminal_view);
 		}
 	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		if (bcrd != null) {
+			bcrd.close();
+			bcrd = null;
+		}
+		if (aidcManager != null) {
+			aidcManager.close();
+		}
+	}
+	@Override
+	public void onBarcodeEvent(com.honeywell.aidc.BarcodeReadEvent barcodeReadEvent) {
+		Log.d(TAG,"onBarcode: " + (barcodeReadEvent==null?"nil":barcodeReadEvent.getBarcodeData())
+		 + ":a=" + barcodeReadEvent.getAimId() + ":i=" + barcodeReadEvent.getCodeId()
+		 + ":c=" + barcodeReadEvent.getCharset());
+	}
+
+	@Override
+	public void onFailureEvent(BarcodeFailureEvent barcodeFailureEvent) {
+		Log.d(TAG,"onFailureEvent: " + (barcodeFailureEvent==null?"nil":barcodeFailureEvent.toString()));
+		try {
+			if (bcrd!=null) bcrd.softwareTrigger(false);
+		} catch (ScannerNotClaimedException e) {
+			e.printStackTrace();
+		} catch (ScannerUnavailableException e) {
+			e.printStackTrace();
+		}
+	}
+
+
 }

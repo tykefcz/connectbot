@@ -317,6 +317,9 @@ public void setScreenSize(int c, int r, boolean broadcast) {
       BackSpace[0] = "\b";
       BackSpace[1] = "\u007f";
       break;
+    case 2:
+      BackSpace[0] = "\b";
+      BackSpace[1] = "\b";
     }
   }
 
