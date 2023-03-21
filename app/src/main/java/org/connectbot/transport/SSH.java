@@ -297,9 +297,12 @@ public class SSH extends AbsTransport implements ConnectionMonitor, InteractiveC
 					bridge.outputLine(manager.res.getString(R.string.terminal_auth_ki_fail));
 				}
 			} else if (connection.isAuthMethodAvailable(host.getUsername(), AUTH_PASSWORD)) {
-				bridge.outputLine(manager.res.getString(R.string.terminal_auth_pass));
-				String password = bridge.getPromptHelper().requestStringPrompt(null,
-						manager.res.getString(R.string.prompt_password));
+				String password = host.getPassword();
+				if (password == null) {
+					bridge.outputLine(manager.res.getString(R.string.terminal_auth_pass));
+					password = bridge.getPromptHelper().requestStringPrompt(null,
+							manager.res.getString(R.string.prompt_password));
+				}
 				if (password != null
 						&& connection.authenticateWithPassword(host.getUsername(), password)) {
 					finishConnection();
@@ -841,7 +844,9 @@ public class SSH extends AbsTransport implements ConnectionMonitor, InteractiveC
 		host.setPort(port);
 
 		host.setUsername(uri.getUserInfo());
-
+		if (uri.getUserInfo().contains(":")) {
+			host.setPassword(uri.getUserInfo().split(":", 2)[1]);
+		}
 		String nickname = uri.getFragment();
 		if (nickname == null || nickname.length() == 0) {
 			host.setNickname(getDefaultNickname(host.getUsername(),

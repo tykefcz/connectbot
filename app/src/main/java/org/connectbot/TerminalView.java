@@ -28,6 +28,9 @@ import org.connectbot.service.TerminalKeyListener;
 import org.connectbot.util.PreferenceConstants;
 import org.connectbot.util.TerminalTextViewOverlay;
 import org.connectbot.util.TerminalViewPager;
+
+import android.os.Build;
+import cz.madeta.droidssh.BuildConfig;
 import cz.madeta.droidssh.R;
 
 import android.app.Activity;
@@ -235,6 +238,18 @@ public class TerminalView extends FrameLayout implements FontSizeChangedListener
 			Log.d(tag, "Honeywel exc:" + e.toString());
 		}
         */
+		/* tohle ma stejnou jednu restrikci ohledne audia
+		UserManager um = (UserManager) getContext().getSystemService(Context.USER_SERVICE);
+		Bundle bu = um.getUserRestrictions();
+		for (String key : bu.keySet()) {
+			Log.d(tag, "UserRestriction["+key+"]:" + bu.get(key).toString());
+		} */
+		try {
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+				Log.d(tag, "Api:" + Build.VERSION.SDK_INT + " model:" + Build.MODEL);
+				Log.d(tag, " hw:" + Build.HARDWARE + " brand:" + Build.BRAND + " device:" + Build.DEVICE + " manufacturer:" + Build.MANUFACTURER);
+			}
+		} catch (Exception e) {Log.d(tag,"ex:",e);}
 		bridge.addFontSizeChangedListener(this);
 		bridge.parentChanged(this);
 
@@ -441,14 +456,18 @@ public class TerminalView extends FrameLayout implements FontSizeChangedListener
 		if (bridge.bitmap != null) {
 			// draw the bitmap
 			bridge.onDraw();
-			try {
-				String x = String.format("onDraw br=%dx%d -> %dx%d",bridge.bitmap.getWidth(),bridge.bitmap.getHeight(),
-					canvas.getWidth(),canvas.getHeight());
-				if (!x.equals(lastlog)) {
-					lastlog = x;
-					Log.d(tag, x);
+			if (BuildConfig.DEBUG) {
+				try {
+					String x = String.format("onDraw br=%dx%d -> %dx%d", bridge.bitmap.getWidth(), bridge.bitmap.getHeight(),
+							canvas.getWidth(), canvas.getHeight());
+					if (!x.equals(lastlog)) {
+						lastlog = x;
+						Log.d(tag, x);
+					}
+				} catch (Exception e) {
+					Log.e(tag, e.toString());
 				}
-			} catch (Exception e) {Log.e(tag,e.toString());}
+			}
 			// draw the bridge bitmap if it exists
 			if (ulCols > 0 && ulRows > 0 ) {
 				Rect pix2pix =  new Rect(0, 0, canvas.getWidth(), canvas.getHeight());

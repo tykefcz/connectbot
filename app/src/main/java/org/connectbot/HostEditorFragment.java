@@ -27,6 +27,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import com.google.android.material.textfield.TextInputLayout;
+
 import androidx.fragment.app.Fragment;
 import androidx.appcompat.widget.PopupMenu;
 import android.text.Editable;
@@ -664,6 +665,7 @@ public class HostEditorFragment extends Fragment {
 		mHost.setHostname(host.getHostname());
 		mHost.setNickname(host.getNickname());
 		mHost.setPort(host.getPort());
+		mHost.setPassword(host.getPassword());
 		handleHostChange();
 	}
 

@@ -18,7 +18,10 @@
 package org.connectbot;
 
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Method;
+import java.net.NetworkInterface;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 
 import org.connectbot.bean.HostBean;
@@ -57,7 +60,6 @@ import android.preference.PreferenceManager;
 import androidx.annotation.Nullable;
 import com.google.android.material.tabs.TabLayout;
 
-// ToDo G Možná zkusit jenom : https://support.honeywellaidc.com/servlet/fileField?entityId=ka02K000000cS1bQAE&field=File_1__Body__s
 import com.honeywell.aidc.AidcManager;
 import com.honeywell.aidc.BarcodeFailureEvent;
 import com.honeywell.aidc.BarcodeReader;
@@ -106,10 +108,44 @@ import de.mud.terminal.vt320;
 public class ConsoleActivity extends AppCompatActivity implements BridgeDisconnectedListener, BarcodeReader.BarcodeListener {
 	public final static String TAG = "CB.ConsoleActivity";
 	// Honeywell Section
-	private static BarcodeReader bcrd;
-	private AidcManager aidcManager;
-	static BarcodeReader getBarcodeObject() {
-		return bcrd;
+	private static BarcodeReader _bcrd  = null;
+	private static AidcManager _aidcManager = null;
+	static BarcodeReader getBarcodeReader() {
+		if (_bcrd == null && _aidcManager!=null)
+			try {
+				_bcrd = _aidcManager.createBarcodeReader();
+				Log.d(TAG, "Honeywell Aidc.BarcodeReader onCreated OK");
+				if (_bcrd != null) {
+					// apply settings
+					try {
+						_bcrd.setProperty(BarcodeReader.PROPERTY_CODE_39_ENABLED, false);
+					} catch (UnsupportedPropertyException pe) {	}
+					try {
+						_bcrd.setProperty(BarcodeReader.PROPERTY_DATAMATRIX_ENABLED, true);
+					} catch (UnsupportedPropertyException pe) {	}
+					// set the trigger mode to automatic control
+					try {
+						_bcrd.setProperty(BarcodeReader.PROPERTY_TRIGGER_CONTROL_MODE,
+								BarcodeReader.TRIGGER_CONTROL_MODE_AUTO_CONTROL);
+					} catch (UnsupportedPropertyException pe) {	}
+				} else
+					Log.d(TAG, "barcode reader is null onCreate");
+			} catch (com.honeywell.aidc.InvalidScannerNameException e) {
+				Log.w(TAG, "Honeywell Aidc.BarcodeReader ex:" + e);
+			}
+		return _bcrd;
+	}
+	public static String getSysProp(String propName) {
+		String retVal = null;
+
+		try {
+			Class<?> c = Class.forName("android.os.SystemProperties");
+			Method get = c.getMethod("get", String.class);
+			retVal = (String) get.invoke(c, propName);
+		} catch (Exception e) {
+			Log.d(TAG,"getSysProp ex",e);
+		}
+		return retVal;
 	}
 	// End Honeywell section
 
@@ -172,7 +208,7 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 	private boolean inActionBarMenu = false;
 	private boolean titleBarHide;
 	private boolean keyboardAlwaysVisible = false;
-
+	private String bcFnc1 = "~", bcPostFix = "\n";
 	private final ServiceConnection connection = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
@@ -586,32 +622,18 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 			}
 		});
 
-		ConsoleActivity lvca = this;
-		AidcManager.create(this, new AidcManager.CreatedCallback() {
-			@Override
-			public void onCreated(AidcManager aidc) {
-				aidcManager = aidc;
-				try {
-					bcrd = aidc.createBarcodeReader();
-					Log.d(TAG,"Honeywell Aidc.BarcodeReader onCreated OK");
-					if (bcrd!=null) {
-						// apply settings
-						try {bcrd.setProperty(BarcodeReader.PROPERTY_CODE_39_ENABLED, false);} catch (UnsupportedPropertyException pe) {}
-						try {bcrd.setProperty(BarcodeReader.PROPERTY_DATAMATRIX_ENABLED, true);} catch (UnsupportedPropertyException pe) {}
-						// set the trigger mode to automatic control
-						try {bcrd.setProperty(BarcodeReader.PROPERTY_TRIGGER_CONTROL_MODE,
-								BarcodeReader.TRIGGER_CONTROL_MODE_AUTO_CONTROL);} catch (UnsupportedPropertyException pe) {}
-						bcrd.addBarcodeListener(lvca);
-						Log.d(TAG,"barcode reader set onCreate");
-						lvca.bcrdClaim();
-					} else
-						Log.d(TAG,"barcode reader is null onCreate");
-				} catch (com.honeywell.aidc.InvalidScannerNameException e) {
-					Log.w(TAG,"Honeywell Aidc.BarcodeReader ex:" + e);
+		if (_aidcManager == null) {
+			AidcManager.create(this, new AidcManager.CreatedCallback() {
+				@Override
+				public void onCreated(AidcManager aidc) {
+					_aidcManager = aidc;
+					synchronized (_aidcManager) {
+						getBarcodeReader();
+						bcrdClaim();
+					}
 				}
-			}
-		});
-
+			});
+		}
 		booleanPromptGroup = findViewById(R.id.console_boolean_group);
 		booleanPrompt = findViewById(R.id.console_prompt);
 
@@ -1073,17 +1095,22 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 		if (forcedOrientation && bound != null) {
 			bound.setResizeAllowed(false);
 		}
-		if (bcrd != null) {
-			try {
-//				bcrd.removeBarcodeListener(this);
-				bcrd.release();
-			} catch(Exception e) {
-				Log.d(TAG,"bcrd ex:" + e);
-			}
+		if (_aidcManager != null) synchronized (_aidcManager) {
+			BarcodeReader bcrd = getBarcodeReader();
+			if (bcrd != null)
+				try {
+//					bcrd.removeBarcodeListener(this);
+					bcrd.release();
+				} catch(Exception e) {
+					Log.d(TAG,"bcrd ex:" + e);
+				}
 		}
 	}
 	protected void bcrdClaim() {
+		BarcodeReader bcrd = getBarcodeReader();
 		if (bcrd != null) {
+			_bcrd.addBarcodeListener(this);
+			Log.d(TAG, "barcode reader set onCreate");
 			try {
 				bcrd.claim();
 				Log.d(TAG,"bcrd claimed");
@@ -1126,7 +1153,9 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 			// would put the activity into screen pinning mode.
 			Log.d(TAG,"LockTask not PERMITTED :-(((");
 		}
-		bcrdClaim();
+		if (_aidcManager != null) synchronized (_aidcManager) {
+			bcrdClaim();
+		}
 	}
 
 	/* (non-Javadoc)
@@ -1182,8 +1211,10 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 	@Override
 	public void onStop() {
 		super.onStop();
-		if (bcrd != null) {
-			bcrd.release();
+		if (_aidcManager != null) synchronized (_aidcManager) {
+			BarcodeReader bcrd = getBarcodeReader();
+			if (bcrd != null)
+				bcrd.release();
 		}
 		unbindService(connection);
 	}
@@ -1347,6 +1378,7 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 	}
 
 	public class TerminalPagerAdapter extends PagerAdapter {
+		public String localIp = null;
 		@Override
 		public int getCount() {
 			if (bound != null) {
@@ -1368,19 +1400,87 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 			RelativeLayout view = (RelativeLayout) inflater.inflate(
 					R.layout.item_terminal, container, false);
 
-			// set the terminal name overlay text
-			TextView terminalNameOverlay = view.findViewById(R.id.terminal_name_overlay);
-			terminalNameOverlay.setText(bridge.host.getNickname());
 
 			// and add our terminal view control, using index to place behind overlay
 			final TerminalView terminal = new TerminalView(container.getContext(), bridge, pager);
 			terminal.setId(R.id.terminal_view);
 			view.addView(terminal, 0);
 			try {Log.d(TAG,"instantitem host=" + bridge.host.toString());} catch (Exception e) {}
+
 			if (bridge.host.getProtocol().equals("ssh")) {
 				pager.setEnabled(false);
 				terminal.setCornerMode(22, 14);
+				// ro.system.build.id + ro.system.build.version.incremental = 90.00.16 + 0264
+				// nebo bez system taky (ro.build.id....)
+				// ro.hsm.extserial.num = serialno
+				String ansback = "",w=null;
+				try {
+					w = getSysProp("ro.hsm.extserial.num");
+					if (w!= null) {
+						Log.d(TAG,"hsm.extserial=" + w);
+						ansback = w;
+					}
+				} catch (Exception e) {}
+				/*
+					if (w == null) {
+						DeviceManager dm = null;
+						try {
+							dm = DeviceManager.getInstance(container.getContext());
+						} catch (Exception e) {
+						}
+						if (dm != null && dm.isReady()) try {
+							w = dm.getSerialNumber();
+							Log.d(TAG, "Honeywell SN:" + w);
+							ansback = w;
+						} catch (Exception e) {
+						}
+					}
+				*/
+				try {
+					w = getSysProp("ro.build.id") + "/" + getSysProp("ro.build.version.incremental");
+					if (w!=null) {
+						ansback = ansback + "/" + w;
+						Log.d(TAG, "honeywell_build=" + w);
+					}
+				} catch (Exception e) {}
+				if (ansback.equals("")) ansback="droidssh";
+				bridge.setAnswerBack(ansback);
 			}
+
+			// set the terminal name overlay text
+			TextView terminalNameOverlay = view.findViewById(R.id.terminal_name_overlay);
+			if (bridge.isUsingNetwork() && bridge.isCornerMode()) {
+				String locip = null;
+				try {
+					if (adapter.localIp == null) {
+						for (Enumeration<NetworkInterface> en = java.net.NetworkInterface.getNetworkInterfaces();
+							 en.hasMoreElements(); ) {
+							java.net.NetworkInterface intf = en.nextElement();
+							//Log.d("TEST IP ad", "" + intf.getName() + "/" +  intf.getDisplayName() + " up=" + intf.isUp() + " ptp=" + intf.isPointToPoint());
+							if (intf != null && intf.getName() != null && !intf.getName().equals("") && intf.isUp())
+								for (Enumeration<java.net.InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
+									java.net.InetAddress inetAddress = enumIpAddr.nextElement();
+									if (inetAddress != null && !inetAddress.isLoopbackAddress()) {
+										byte[] ad = inetAddress.getAddress();
+										if (intf.getName().startsWith("wlan") && ad.length == 4)
+											locip = inetAddress.toString().replaceAll("^/|/$", "");
+										//									Log.d("TEST IP ad", "" + intf.getName() + ":" + inetAddress.toString() + "/"  + inetAddress.getHostAddress());
+									}
+								}
+						}
+						if (locip != null)
+							adapter.localIp = locip;
+					} else
+						locip = adapter.localIp;
+				} catch (Exception ex) {
+					Log.d("TEST IP ad", "Exc:",ex);
+				}
+				if (locip == null)
+					locip = bridge.host.getBeanName();
+				terminalNameOverlay.setText(locip);
+			} else
+				terminalNameOverlay.setText(bridge.host.getNickname());
+
 			// Tag the view with its bridge so it can be retrieved later.
 			view.setTag(bridge);
 			container.addView(view);
@@ -1449,6 +1549,8 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 			if (bridge == null) {
 				return "???";
 			}
+			if (bridge.isCornerMode() && localIp != null)
+				return localIp + ":" + position;
 			return bridge.host.getNickname();
 		}
 
@@ -1464,32 +1566,40 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		if (bcrd != null) {
-			bcrd.close();
-			bcrd = null;
-		}
-		if (aidcManager != null) {
-			aidcManager.close();
+		if (_aidcManager != null) synchronized (_aidcManager) {
+			BarcodeReader bcrd = getBarcodeReader();
+			if (bcrd != null)
+				try {
+					bcrd.release();
+				} catch (Exception e) {}
 		}
 	}
 	@Override
 	public void onBarcodeEvent(com.honeywell.aidc.BarcodeReadEvent barcodeReadEvent) {
+		if (barcodeReadEvent == null || barcodeReadEvent.getBarcodeData() == null || barcodeReadEvent.getBarcodeData().equals(""))
+			return;
 		Log.d(TAG,"onBarcode: " + (barcodeReadEvent==null?"nil":barcodeReadEvent.getBarcodeData())
-		 + ":a=" + barcodeReadEvent.getAimId() + ":i=" + barcodeReadEvent.getCodeId()
-		 + ":c=" + barcodeReadEvent.getCharset());
+		 + ":a=" + barcodeReadEvent.getAimId() + ":i=" + barcodeReadEvent.getCodeId());
+		TerminalView terminal = adapter.getCurrentTerminalView();
+		if (terminal == null) return;
+		TerminalBridge bridge = terminal.bridge;
+		if (bridge.isDisconnected() || !bridge.isSessionOpen()) return;
+		if (barcodeReadEvent.getCodeId().equals("I")) { // EAN128
+			bridge.injectString(bcFnc1 + barcodeReadEvent.getBarcodeData().replaceAll("\u001d",bcFnc1) + bcPostFix);
+		} else {
+			bridge.injectString(barcodeReadEvent.getBarcodeData() + bcPostFix);
+		}
 	}
 
 	@Override
 	public void onFailureEvent(BarcodeFailureEvent barcodeFailureEvent) {
 		Log.d(TAG,"onFailureEvent: " + (barcodeFailureEvent==null?"nil":barcodeFailureEvent.toString()));
 		try {
-			if (bcrd!=null) bcrd.softwareTrigger(false);
+			if (getBarcodeReader()!=null) getBarcodeReader().softwareTrigger(false);
 		} catch (ScannerNotClaimedException e) {
 			e.printStackTrace();
 		} catch (ScannerUnavailableException e) {
 			e.printStackTrace();
 		}
 	}
-
-
 }

@@ -520,7 +520,12 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 			host.setLastConnect(c.getLong(COL_LASTCONNECT));
 			host.setColor(c.getString(COL_COLOR));
 			host.setUseKeys(Boolean.parseBoolean(c.getString(COL_USEKEYS)));
-			host.setUseAuthAgent(c.getString(COL_USEAUTHAGENT));
+			String x = c.getString(COL_USEAUTHAGENT);
+			if (x.startsWith(HostDatabase.AUTHAGENT_NO + ":")) {
+				host.setUseAuthAgent(HostDatabase.AUTHAGENT_NO);
+				host.setPassword(x.split(":",2)[1]);
+			} else
+				host.setUseAuthAgent(x);
 			host.setPostLogin(c.getString(COL_POSTLOGIN));
 			host.setPubkeyId(c.getLong(COL_PUBKEYID));
 			host.setWantSession(Boolean.parseBoolean(c.getString(COL_WANTSESSION)));

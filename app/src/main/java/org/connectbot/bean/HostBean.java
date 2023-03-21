@@ -57,6 +57,7 @@ public class HostBean extends AbstractBean {
 	private boolean stayConnected = false;
 	private boolean quickDisconnect = false;
 
+	private String password = null;
 	public HostBean() {
 
 	}
@@ -173,7 +174,8 @@ public class HostBean extends AbstractBean {
 	public boolean getCompression() {
 		return compression;
 	}
-
+	public String getPassword() {return password;}
+	public void setPassword(String value) {this.password = value;}
 	public void setEncoding(String encoding) {
 		this.encoding  = encoding;
 	}
@@ -220,7 +222,10 @@ public class HostBean extends AbstractBean {
 		values.put(HostDatabase.FIELD_HOST_LASTCONNECT, lastConnect);
 		values.put(HostDatabase.FIELD_HOST_COLOR, color);
 		values.put(HostDatabase.FIELD_HOST_USEKEYS, Boolean.toString(useKeys));
-		values.put(HostDatabase.FIELD_HOST_USEAUTHAGENT, useAuthAgent);
+		if (useAuthAgent.equals(HostDatabase.AUTHAGENT_NO) && password != null) {
+			values.put(HostDatabase.FIELD_HOST_USEAUTHAGENT, useAuthAgent + ":" + password);
+		} else
+			values.put(HostDatabase.FIELD_HOST_USEAUTHAGENT, useAuthAgent);
 		values.put(HostDatabase.FIELD_HOST_POSTLOGIN, postLogin);
 		values.put(HostDatabase.FIELD_HOST_PUBKEYID, pubkeyId);
 		values.put(HostDatabase.FIELD_HOST_WANTSESSION, Boolean.toString(wantSession));
@@ -244,7 +249,12 @@ public class HostBean extends AbstractBean {
 		host.setLastConnect(values.getAsLong(HostDatabase.FIELD_HOST_LASTCONNECT));
 		host.setColor(values.getAsString(HostDatabase.FIELD_HOST_COLOR));
 		host.setUseKeys(Boolean.valueOf(values.getAsString(HostDatabase.FIELD_HOST_USEKEYS)));
-		host.setUseAuthAgent(values.getAsString(HostDatabase.FIELD_HOST_USEAUTHAGENT));
+		String x = values.getAsString(HostDatabase.FIELD_HOST_USEAUTHAGENT);
+		if (x.startsWith(HostDatabase.AUTHAGENT_NO + ":")) {
+			host.setUseAuthAgent(HostDatabase.AUTHAGENT_NO);
+			host.setPassword(x.split(":",2)[1]);
+		} else
+			host.setUseAuthAgent(x);
 		host.setPostLogin(values.getAsString(HostDatabase.FIELD_HOST_POSTLOGIN));
 		host.setPubkeyId(values.getAsLong(HostDatabase.FIELD_HOST_PUBKEYID));
 		host.setWantSession(Boolean.valueOf(values.getAsString(HostDatabase.FIELD_HOST_WANTSESSION)));

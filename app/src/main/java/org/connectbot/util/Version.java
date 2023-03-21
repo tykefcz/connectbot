@@ -33,17 +33,6 @@ public class Version {
 		try {
 			PackageInfo pi = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
 			textView.setText(pi.versionName);
-/*
-			DeviceManager dm = null;
-			try {dm = DeviceManager.getInstance(context);} catch (Exception e) {}
-			if (dm != null && dm.isReady()) try {
-				textView.setText(pi.versionName + " on " + dm.getSerialNumber() + "/" + dm.getInternalTemperature());
-			} catch (Exception e) {
-				textView.setText(pi.versionName);
-			} else
-				textView.setText(pi.versionName);
-
- */
 		} catch (PackageManager.NameNotFoundException e) {
 			Log.i(TAG, "Couldn't get my own package info for some reason");
 		}
