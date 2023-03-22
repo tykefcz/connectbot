@@ -58,6 +58,9 @@ public class HostBean extends AbstractBean {
 	private boolean quickDisconnect = false;
 
 	private String password = null;
+	private int ulRows=0,ulCols=0,ulVirtCols=0,ulVirtRows=0;
+	private String barcodeSuffix="", barcodeConfig="";
+	private boolean autoConnect;
 	public HostBean() {
 
 	}
@@ -176,6 +179,40 @@ public class HostBean extends AbstractBean {
 	}
 	public String getPassword() {return password;}
 	public void setPassword(String value) {this.password = value;}
+	public void setVirtualArea(String value) {
+		ulVirtCols=ulVirtRows=0;
+		if (value==null || value.equals("") || value.equals("0x0")) return;
+		try {
+			String[] a = value.split("x");
+			ulVirtCols = Integer.parseInt(a[0]);
+			ulVirtRows = Integer.parseInt(a[1]);
+		} catch (Exception e) {
+			ulVirtCols=ulVirtRows=0;
+		}
+	}
+	public void setCornerArea(String value) {
+		ulCols=ulRows=0;
+		if (value==null || value.equals("") || value.equals("0x0")) return;
+		try {
+			String[] a = value.split("x");
+			ulCols = Integer.parseInt(a[0]);
+			ulRows = Integer.parseInt(a[1]);
+		} catch (Exception e) {
+			ulCols=ulRows=0;
+		}
+	}
+	public int[] getUlSize() {
+		int[] rv=new int[4];
+		rv[0] = ulCols; rv[1] = ulRows;
+		rv[2] = ulVirtCols; rv[3] = ulVirtRows;
+		return rv;
+	}
+	public void setAutoconnect(boolean value) {autoConnect = value;}
+	public boolean getAutoconnect() { return autoConnect;}
+	public void setBarcodeConfig(String value) {barcodeConfig = value;}
+	public String getBarcodeConfig() { return barcodeConfig;}
+	public void setBarcodeSuffix(String value) {barcodeSuffix = value;}
+	public String getBarcodeSuffix() { return barcodeSuffix;}
 	public void setEncoding(String encoding) {
 		this.encoding  = encoding;
 	}
@@ -222,10 +259,7 @@ public class HostBean extends AbstractBean {
 		values.put(HostDatabase.FIELD_HOST_LASTCONNECT, lastConnect);
 		values.put(HostDatabase.FIELD_HOST_COLOR, color);
 		values.put(HostDatabase.FIELD_HOST_USEKEYS, Boolean.toString(useKeys));
-		if (useAuthAgent.equals(HostDatabase.AUTHAGENT_NO) && password != null) {
-			values.put(HostDatabase.FIELD_HOST_USEAUTHAGENT, useAuthAgent + ":" + password);
-		} else
-			values.put(HostDatabase.FIELD_HOST_USEAUTHAGENT, useAuthAgent);
+		values.put(HostDatabase.FIELD_HOST_USEAUTHAGENT, useAuthAgent);
 		values.put(HostDatabase.FIELD_HOST_POSTLOGIN, postLogin);
 		values.put(HostDatabase.FIELD_HOST_PUBKEYID, pubkeyId);
 		values.put(HostDatabase.FIELD_HOST_WANTSESSION, Boolean.toString(wantSession));
@@ -235,6 +269,13 @@ public class HostBean extends AbstractBean {
 		values.put(HostDatabase.FIELD_HOST_ENCODING, encoding);
 		values.put(HostDatabase.FIELD_HOST_STAYCONNECTED, Boolean.toString(stayConnected));
 		values.put(HostDatabase.FIELD_HOST_QUICKDISCONNECT, Boolean.toString(quickDisconnect));
+
+		values.put(HostDatabase.FIELD_HOST_PASSWORD, password);
+		values.put(HostDatabase.FIELD_HOST_AUTOCONNECT,Boolean.toString(autoConnect));
+		values.put(HostDatabase.FIELD_HOST_BARCODE_SUFFIX,barcodeSuffix);
+		values.put(HostDatabase.FIELD_HOST_BARCODE_CONFIG,barcodeConfig);
+		values.put(HostDatabase.FIELD_HOST_CORNER,ulCols==0 && ulRows==0 ? "" : ("" + ulCols + "x" + ulRows));
+		values.put(HostDatabase.FIELD_HOST_VIRTUAL,ulVirtCols==0 && ulVirtRows==0 ? "" : ("" + ulVirtCols + "x" + ulVirtRows));
 
 		return values;
 	}
@@ -249,12 +290,7 @@ public class HostBean extends AbstractBean {
 		host.setLastConnect(values.getAsLong(HostDatabase.FIELD_HOST_LASTCONNECT));
 		host.setColor(values.getAsString(HostDatabase.FIELD_HOST_COLOR));
 		host.setUseKeys(Boolean.valueOf(values.getAsString(HostDatabase.FIELD_HOST_USEKEYS)));
-		String x = values.getAsString(HostDatabase.FIELD_HOST_USEAUTHAGENT);
-		if (x.startsWith(HostDatabase.AUTHAGENT_NO + ":")) {
-			host.setUseAuthAgent(HostDatabase.AUTHAGENT_NO);
-			host.setPassword(x.split(":",2)[1]);
-		} else
-			host.setUseAuthAgent(x);
+		host.setUseAuthAgent(values.getAsString(HostDatabase.FIELD_HOST_USEAUTHAGENT));
 		host.setPostLogin(values.getAsString(HostDatabase.FIELD_HOST_POSTLOGIN));
 		host.setPubkeyId(values.getAsLong(HostDatabase.FIELD_HOST_PUBKEYID));
 		host.setWantSession(Boolean.valueOf(values.getAsString(HostDatabase.FIELD_HOST_WANTSESSION)));
@@ -264,6 +300,13 @@ public class HostBean extends AbstractBean {
 		host.setEncoding(values.getAsString(HostDatabase.FIELD_HOST_ENCODING));
 		host.setStayConnected(values.getAsBoolean(HostDatabase.FIELD_HOST_STAYCONNECTED));
 		host.setQuickDisconnect(values.getAsBoolean(HostDatabase.FIELD_HOST_QUICKDISCONNECT));
+
+		host.setPassword(values.getAsString(HostDatabase.FIELD_HOST_PASSWORD));
+		host.setVirtualArea(values.getAsString(HostDatabase.FIELD_HOST_VIRTUAL));
+		host.setCornerArea(values.getAsString(HostDatabase.FIELD_HOST_CORNER));
+		host.setAutoconnect(values.getAsBoolean(HostDatabase.FIELD_HOST_AUTOCONNECT));
+		host.setBarcodeConfig(values.getAsString(HostDatabase.FIELD_HOST_BARCODE_CONFIG));
+		host.setBarcodeSuffix(values.getAsString(HostDatabase.FIELD_HOST_BARCODE_SUFFIX));
 		return host;
 	}
 

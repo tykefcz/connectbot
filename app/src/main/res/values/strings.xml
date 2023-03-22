@@ -673,4 +673,5 @@
 	     Added to the end of a key description to indicate that the key is encrypted (i.e,
 	     password protected). -->
 	<string name="key_attribute_encrypted">(encrypted)</string>
+	<string name="pref_conn_autoconnect">Auto connect on start</string>
 </resources>

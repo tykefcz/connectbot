@@ -105,6 +105,8 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import de.mud.terminal.vt320;
 
+import static cz.madeta.HonUtils.getSysProp;
+
 public class ConsoleActivity extends AppCompatActivity implements BridgeDisconnectedListener, BarcodeReader.BarcodeListener {
 	public final static String TAG = "CB.ConsoleActivity";
 	// Honeywell Section
@@ -134,18 +136,6 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 				Log.w(TAG, "Honeywell Aidc.BarcodeReader ex:" + e);
 			}
 		return _bcrd;
-	}
-	public static String getSysProp(String propName) {
-		String retVal = null;
-
-		try {
-			Class<?> c = Class.forName("android.os.SystemProperties");
-			Method get = c.getMethod("get", String.class);
-			retVal = (String) get.invoke(c, propName);
-		} catch (Exception e) {
-			Log.d(TAG,"getSysProp ex",e);
-		}
-		return retVal;
 	}
 	// End Honeywell section
 

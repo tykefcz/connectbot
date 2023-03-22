@@ -203,7 +203,11 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 				editor.apply();
 			}
 		}
-
+		if (Build.MANUFACTURER.equals("Honeywell")) {
+			Log.d(TAG,"Provisioning mode=" + cz.madeta.HonUtils.isProvisioningMode());
+		} else {
+			Log.d(TAG,"Manufacturer = " + Build.MANUFACTURER);
+		}
 		this.makingShortcut = Intent.ACTION_CREATE_SHORTCUT.equals(getIntent().getAction())
 								|| Intent.ACTION_PICK.equals(getIntent().getAction());
 

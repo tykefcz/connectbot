@@ -142,6 +142,25 @@
 			</com.google.android.material.textfield.TextInputLayout>
 
 			<com.google.android.material.textfield.TextInputLayout
+				android:id="@+id/plainapss_field_container"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:accessibilityLiveRegion="polite"
+				android:labelFor="@+id/plainpass_edit_text"
+				>
+
+				<com.google.android.material.textfield.TextInputEditText
+					android:id="@id/plainpass_edit_text"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:hint = "@string/prompt_password"
+					android:maxLines="1"
+					android:inputType="textNoSuggestions"
+					/>
+
+			</com.google.android.material.textfield.TextInputLayout>
+
+			<com.google.android.material.textfield.TextInputLayout
 				android:id="@+id/hostname_field_container"
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
@@ -414,12 +433,160 @@
 
 		</RelativeLayout>
 
-		<org.connectbot.views.CheckableMenuItem
-			android:id="@+id/use_ssh_auth_item"
+		<RelativeLayout
+			android:orientation="horizontal"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:icon="@drawable/ic_vpn_lock"
-			android:title="@string/hostpref_authagent_title"
+			android:focusable="true">
+
+			<ImageView
+				android:id="@+id/corner_ulb1"
+				android:layout_width="24dp"
+				android:layout_height="24dp"
+				app:srcCompat="@drawable/ic_code"
+				android:contentDescription="@null"
+				style="@style/ListItemIcon"	/>
+			<TextView
+				android:id="@+id/corner_ulblock"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="CornerMode:"
+				style="@style/ListItemFirstLineText.WithIcon"
+				/>
+
+			<com.google.android.material.textfield.TextInputLayout
+				android:id="@+id/corner_ulcontainer"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_below="@+id/corner_ulblock"
+				android:layout_alignStart="@id/corner_ulblock"
+				android:accessibilityLiveRegion="polite"
+				android:contentDescription="Cols"
+				android:labelFor="@+id/ulcr_edit_cols">
+
+				<com.google.android.material.textfield.TextInputEditText
+					android:id="@id/ulcr_edit_cols"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_marginEnd="10dp"
+					android:hint="Cols"
+					android:inputType="textNoSuggestions|number"
+					android:maxLines="1"
+					android:minEms="4" />
+			</com.google.android.material.textfield.TextInputLayout>
+			<com.google.android.material.textfield.TextInputLayout
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:accessibilityLiveRegion="polite"
+				android:layout_below="@id/corner_ulblock"
+				android:layout_toEndOf="@id/corner_ulcontainer"
+				android:contentDescription="Rows"
+				android:labelFor="@+id/ulcr_edit_rows"
+				>
+
+				<com.google.android.material.textfield.TextInputEditText
+					android:id="@id/ulcr_edit_rows"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:hint="Rows"
+					android:inputType="textNoSuggestions|number"
+					android:maxLines="1"
+					android:minEms="4"
+					android:layout_marginEnd="10dp"	/>
+			</com.google.android.material.textfield.TextInputLayout>
+			<com.google.android.material.textfield.TextInputLayout
+				android:id="@+id/corner_ulcontainer2"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_below="@+id/corner_ulcontainer"
+				android:layout_alignStart="@id/corner_ulblock"
+				android:accessibilityLiveRegion="polite"
+				android:contentDescription="VirtCols"
+				android:labelFor="@+id/ulcr_edit_vcols">
+
+				<com.google.android.material.textfield.TextInputEditText
+					android:id="@id/ulcr_edit_vcols"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_marginEnd="10dp"
+					android:hint="VirtCols"
+					android:inputType="textNoSuggestions|number"
+					android:maxLines="1"
+					android:minEms="4" />
+			</com.google.android.material.textfield.TextInputLayout>
+			<com.google.android.material.textfield.TextInputLayout
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:accessibilityLiveRegion="polite"
+				android:layout_below="@id/corner_ulcontainer"
+				android:layout_toEndOf="@id/corner_ulcontainer2"
+				android:contentDescription="VirtRows"
+				android:labelFor="@+id/ulcr_edit_vrows"
+				>
+
+				<com.google.android.material.textfield.TextInputEditText
+					android:id="@id/ulcr_edit_vrows"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:hint="VirtRows"
+					android:inputType="textNoSuggestions|number"
+					android:maxLines="1"
+					android:minEms="4"
+					android:layout_marginEnd="10dp"	/>
+			</com.google.android.material.textfield.TextInputLayout>
+		</RelativeLayout>
+
+		<RelativeLayout
+			android:id="@+id/bcsufix_item"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:focusable="true">
+
+			<ImageView
+				android:layout_width="24dp"
+				android:layout_height="24dp"
+				app:srcCompat="@drawable/ic_keyboard_tab"
+				android:contentDescription="@null"
+				style="@style/ListItemIcon"
+				/>
+
+			<TextView
+				android:id="@+id/bcsuffix_title"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="Barcode suffix"
+				android:labelFor="@+id/bcsuffix_field"
+				style="@style/ListItemFirstLineText.WithIcon"
+				/>
+
+			<TextView
+				android:id="@+id/bcsuffix_summary"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="Barcode suffix"
+				android:layout_below="@id/bcsuffix_title"
+				android:layout_alignParentBottom="false"
+				android:paddingBottom="2dp"
+				style="@style/ListItemSecondLineText.WithIcon"
+				/>
+
+			<EditText
+				android:id="@id/bcsuffix_field"
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginLeft="72dp"
+				android:layout_marginStart="72dp"
+				android:layout_below="@id/bcsuffix_summary"
+				android:inputType="text"
+				android:lines="1"
+				/>
+		</RelativeLayout>
+
+		<org.connectbot.views.CheckableMenuItem
+			android:id="@+id/host_autoconnect"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:title= "@string/pref_conn_autoconnect"
 			/>
 
 		<org.connectbot.views.CheckableMenuItem
@@ -446,7 +613,15 @@
 			android:icon="@drawable/ic_laptop"
 			android:title="@string/hostpref_wantsession_title"
 			app:summary="@string/hostpref_wantsession_summary"
-			/>
+			>
+
+			<org.connectbot.views.CheckableMenuItem
+				android:id="@+id/use_ssh_auth_item"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:icon="@drawable/ic_vpn_lock"
+				android:title="@string/hostpref_authagent_title" />
+		</org.connectbot.views.CheckableMenuItem>
 
 		<org.connectbot.views.CheckableMenuItem
 			android:id="@+id/stay_connected_item"

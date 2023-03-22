@@ -28,15 +28,14 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import com.google.android.material.textfield.TextInputLayout;
 
+import android.util.Log;
 import androidx.fragment.app.Fragment;
 import androidx.appcompat.widget.PopupMenu;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
@@ -130,6 +129,12 @@ public class HostEditorFragment extends Fragment {
 	private EditText mPostLoginAutomationField;
 	private HostTextFieldWatcher mFontSizeTextChangeListener;
 
+	private CheckableMenuItem mAutoConnect;
+	//private CheckableMenuItem mCornerMode;
+	private View mPlainTextPasswordContainer;
+	private EditText mCornerCols,mCornerRows,mVirtualCols,mVirtualRows,mPlainTextPassword;
+	private EditText mBarcodeSuffix;
+	//private CheckableMenuItem[] mEnableBcs;
 	public static HostEditorFragment newInstance(
 			HostBean existingHost, ArrayList<String> pubkeyNames, ArrayList<String> pubkeyValues) {
 		HostEditorFragment fragment = new HostEditorFragment();
@@ -173,23 +178,17 @@ public class HostEditorFragment extends Fragment {
 		View view = inflater.inflate(R.layout.fragment_host_editor, container, false);
 
 		mTransportItem = view.findViewById(R.id.protocol_item);
-		mTransportItem.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				PopupMenu menu = new PopupMenu(getActivity(), v);
-				for (String name : TransportFactory.getTransportNames()) {
-					menu.getMenu().add(name);
-				}
-				menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-					@Override
-					public boolean onMenuItemClick(MenuItem item) {
-						setTransportType(
-								item.getTitle().toString(), /* setDefaultPortInModel */ true);
-						return true;
-					}
-				});
-				menu.show();
+		mTransportItem.setOnClickListener(v -> {
+			PopupMenu menu = new PopupMenu(getActivity(), v);
+			for (String name : TransportFactory.getTransportNames()) {
+				menu.getMenu().add(name);
 			}
+			menu.setOnMenuItemClickListener(item -> {
+				setTransportType(
+						item.getTitle().toString(), /* setDefaultPortInModel */ true);
+				return true;
+			});
+			menu.show();
 		});
 
 		mTransportText = view.findViewById(R.id.protocol_text);
@@ -239,6 +238,11 @@ public class HostEditorFragment extends Fragment {
 		mUsernameField.setText(mHost.getUsername());
 		mUsernameField.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_USERNAME));
 
+		mPlainTextPasswordContainer = view.findViewById(R.id.plainapss_field_container);
+		mPlainTextPassword = view.findViewById(R.id.plainpass_edit_text);
+		mPlainTextPassword.setText(mHost.getPassword());
+		mPlainTextPassword.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_PASSWORD));
+
 		mHostnameContainer = view.findViewById(R.id.hostname_field_container);
 		mHostnameField = view.findViewById(R.id.hostname_edit_text);
 		mHostnameField.setText(mHost.getHostname());
@@ -266,18 +270,15 @@ public class HostEditorFragment extends Fragment {
 				for (int i = 0; i < mColorNames.length(); i++) {
 					menu.getMenu().add(mColorNames.getText(i));
 				}
-				menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-					@Override
-					public boolean onMenuItemClick(MenuItem item) {
-						for (int i = 0; i < mColorNames.length(); i++) {
-							if (item.getTitle().toString().equals(mColorNames.getText(i).toString())) {
-								mHost.setColor(mColorValues.getText(i).toString());
-								mColorText.setText(mColorNames.getText(i));
-								return true;
-							}
+				menu.setOnMenuItemClickListener(item -> {
+					for (int i = 0; i < mColorNames.length(); i++) {
+						if (item.getTitle().toString().equals(mColorNames.getText(i).toString())) {
+							mHost.setColor(mColorValues.getText(i).toString());
+							mColorText.setText(mColorNames.getText(i));
+							return true;
 						}
-						return false;
 					}
+					return false;
 				});
 				menu.show();
 			}
@@ -295,12 +296,9 @@ public class HostEditorFragment extends Fragment {
 		mFontSizeText.setText(Integer.toString(mHost.getFontSize()));
 		mFontSizeTextChangeListener = new HostTextFieldWatcher(HostDatabase.FIELD_HOST_FONTSIZE);
 		mFontSizeText.addTextChangedListener(mFontSizeTextChangeListener);
-		mFontSizeText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-			@Override
-			public void onFocusChange(View v, boolean hasFocus) {
-				if (!hasFocus)
-					mFontSizeText.setText(Integer.toString(mHost.getFontSize()));
-			}
+		mFontSizeText.setOnFocusChangeListener((v, hasFocus) -> {
+			if (!hasFocus)
+				mFontSizeText.setText(Integer.toString(mHost.getFontSize()));
 		});
 
 		mFontSizeSeekBar = view.findViewById(R.id.font_size_bar);
@@ -321,28 +319,22 @@ public class HostEditorFragment extends Fragment {
 		mFontSizeSeekBar.setProgress(mHost.getFontSize() - MINIMUM_FONT_SIZE);
 
 		mPubkeyItem = view.findViewById(R.id.pubkey_item);
-		mPubkeyItem.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				PopupMenu menu = new PopupMenu(getActivity(), v);
-				for (String name : mPubkeyNames) {
-					menu.getMenu().add(name);
-				}
-				menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-					@Override
-					public boolean onMenuItemClick(MenuItem item) {
-						for (int i = 0; i < mPubkeyNames.size(); i++) {
-							if (mPubkeyNames.get(i).equals(item.getTitle().toString())) {
-								mHost.setPubkeyId(Long.parseLong(mPubkeyValues.get(i)));
-								mPubkeyText.setText(mPubkeyNames.get(i));
-								return true;
-							}
-						}
-						return false;
-					}
-				});
-				menu.show();
+		mPubkeyItem.setOnClickListener(v -> {
+			PopupMenu menu = new PopupMenu(getActivity(), v);
+			for (String name : mPubkeyNames) {
+				menu.getMenu().add(name);
 			}
+			menu.setOnMenuItemClickListener(item -> {
+				for (int i = 0; i < mPubkeyNames.size(); i++) {
+					if (mPubkeyNames.get(i).equals(item.getTitle().toString())) {
+						mHost.setPubkeyId(Long.parseLong(mPubkeyValues.get(i)));
+						mPubkeyText.setText(mPubkeyNames.get(i));
+						return true;
+					}
+				}
+				return false;
+			});
+			menu.show();
 		});
 
 		mPubkeyText = view.findViewById(R.id.pubkey_text);
@@ -354,28 +346,22 @@ public class HostEditorFragment extends Fragment {
 		}
 
 		mDelKeyItem = view.findViewById(R.id.delkey_item);
-		mDelKeyItem.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				PopupMenu menu = new PopupMenu(getActivity(), v);
-				for (int i = 0; i < mDelKeyNames.length(); i++) {
-					menu.getMenu().add(mDelKeyNames.getText(i));
-				}
-				menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-					@Override
-					public boolean onMenuItemClick(MenuItem item) {
-						for (int i = 0; i < mDelKeyNames.length(); i++) {
-							if (mDelKeyNames.getText(i).toString().equals(item.getTitle().toString())) {
-								mHost.setDelKey(mDelKeyValues.getText(i).toString());
-								mDelKeyText.setText(mDelKeyNames.getText(i));
-								return true;
-							}
-						}
-						return false;
-					}
-				});
-				menu.show();
+		mDelKeyItem.setOnClickListener(v -> {
+			PopupMenu menu = new PopupMenu(getActivity(), v);
+			for (int i = 0; i < mDelKeyNames.length(); i++) {
+				menu.getMenu().add(mDelKeyNames.getText(i));
 			}
+			menu.setOnMenuItemClickListener(item -> {
+				for (int i = 0; i < mDelKeyNames.length(); i++) {
+					if (mDelKeyNames.getText(i).toString().equals(item.getTitle().toString())) {
+						mHost.setDelKey(mDelKeyValues.getText(i).toString());
+						mDelKeyText.setText(mDelKeyNames.getText(i));
+						return true;
+					}
+				}
+				return false;
+			});
+			menu.show();
 		});
 
 		mDelKeyText = view.findViewById(R.id.delkey_text);
@@ -387,28 +373,22 @@ public class HostEditorFragment extends Fragment {
 		}
 
 		mEncodingItem = view.findViewById(R.id.encoding_item);
-		mEncodingItem.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				PopupMenu menu = new PopupMenu(getActivity(), v);
-				for (String displayName : mCharsetData.keySet()) {
-					menu.getMenu().add(displayName);
-				}
-				menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-					@Override
-					public boolean onMenuItemClick(MenuItem item) {
-						for (String displayName : mCharsetData.keySet()) {
-							if (displayName.equals(item.getTitle().toString())) {
-								mHost.setEncoding(mCharsetData.get(displayName));
-								mEncodingText.setText(displayName);
-								return true;
-							}
-						}
-						return false;
-					}
-				});
-				menu.show();
+		mEncodingItem.setOnClickListener(v -> {
+			PopupMenu menu = new PopupMenu(getActivity(), v);
+			for (String displayName : mCharsetData.keySet()) {
+				menu.getMenu().add(displayName);
 			}
+			menu.setOnMenuItemClickListener(item -> {
+				for (String displayName : mCharsetData.keySet()) {
+					if (displayName.equals(item.getTitle().toString())) {
+						mHost.setEncoding(mCharsetData.get(displayName));
+						mEncodingText.setText(displayName);
+						return true;
+					}
+				}
+				return false;
+			});
+			menu.show();
 		});
 
 		// The encoding text is initialized in setCharsetData() because Charset data is not always
@@ -417,69 +397,77 @@ public class HostEditorFragment extends Fragment {
 
 		mUseSshAuthSwitch = view.findViewById(R.id.use_ssh_auth_item);
 		mUseSshAuthSwitch.setChecked(!mHost.getUseAuthAgent().equals(HostDatabase.AUTHAGENT_NO));
-		mUseSshAuthSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-			@Override
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				processSshAuthChange();
-			}
-		});
+		mUseSshAuthSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> processSshAuthChange());
 
 		mUseSshConfirmationSwitch = view.findViewById(R.id.ssh_auth_confirmation_item);
 		mUseSshConfirmationSwitch.setChecked(mHost.getUseAuthAgent().equals(HostDatabase.AUTHAGENT_CONFIRM));
-		mUseSshConfirmationSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-			@Override
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				processSshAuthChange();
-			}
-		});
+		mUseSshConfirmationSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> processSshAuthChange());
 
 		processSshAuthChange();
 
 		mCompressionSwitch = view.findViewById(R.id.compression_item);
 		mCompressionSwitch.setChecked(mHost.getCompression());
-		mCompressionSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-			@Override
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				mHost.setCompression(isChecked);
-				handleHostChange();
-			}
+		mCompressionSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+			mHost.setCompression(isChecked);
+			handleHostChange();
 		});
 
 		mStartShellSwitch = view.findViewById(R.id.start_shell_item);
 		mStartShellSwitch.setChecked(mHost.getWantSession());
-		mStartShellSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-			@Override
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				mHost.setWantSession(isChecked);
-				handleHostChange();
-			}
+		mStartShellSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+			mHost.setWantSession(isChecked);
+			handleHostChange();
 		});
 
 		mStayConnectedSwitch = view.findViewById(R.id.stay_connected_item);
 		mStayConnectedSwitch.setChecked(mHost.getStayConnected());
-		mStayConnectedSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-			@Override
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				mHost.setStayConnected(isChecked);
-				handleHostChange();
-			}
+		mStayConnectedSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+			mHost.setStayConnected(isChecked);
+			handleHostChange();
 		});
 
 		mCloseOnDisconnectSwitch = view.findViewById(R.id.close_on_disconnect_item);
 		mCloseOnDisconnectSwitch.setChecked(mHost.getQuickDisconnect());
-		mCloseOnDisconnectSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-			@Override
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				mHost.setQuickDisconnect(isChecked);
-				handleHostChange();
-			}
+		mCloseOnDisconnectSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+			mHost.setQuickDisconnect(isChecked);
+			handleHostChange();
 		});
 
 		mPostLoginAutomationField = view.findViewById(R.id.post_login_automation_field);
 		mPostLoginAutomationField.setText(mHost.getPostLogin());
 		mPostLoginAutomationField.addTextChangedListener(
 				new HostTextFieldWatcher(HostDatabase.FIELD_HOST_POSTLOGIN));
+		try {
+			mAutoConnect = view.findViewById(R.id.host_autoconnect);
+			mAutoConnect.setChecked(mHost.getAutoconnect());
+			mAutoConnect.setOnCheckedChangeListener((buttonView, isChecked) -> {
+				mHost.setAutoconnect(isChecked);
+				handleHostChange();
+			});
+			int[] ulc = mHost.getUlSize();
 
+			mCornerCols = view.findViewById(R.id.ulcr_edit_cols);
+			mCornerCols.setText(ulc[0]);
+			mCornerCols.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_CORNER + ":C"));
+
+			mCornerRows = view.findViewById(R.id.ulcr_edit_rows);
+			mCornerRows.setText(ulc[1]);
+			mCornerRows.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_CORNER + ":R"));
+
+			mVirtualCols = view.findViewById(R.id.ulcr_edit_vcols);
+			mVirtualCols.setText(ulc[2]);
+			mVirtualCols.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_VIRTUAL + ":C"));
+
+			mVirtualRows = view.findViewById(R.id.ulcr_edit_vrows);
+			mVirtualRows.setText(ulc[3]);
+			mVirtualRows.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_VIRTUAL + ":R"));
+
+			mBarcodeSuffix = view.findViewById(R.id.bcsuffix_field);
+			mBarcodeSuffix.setText(mHost.getBarcodeSuffix());
+			mBarcodeSuffix.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_BARCODE_SUFFIX));
+		} catch (Exception e) {
+			Log.e("HostEditFragment","ex",e);
+		}
 		setUriPartsContainerExpanded(mIsUriEditorExpanded);
 
 		return view;
@@ -508,12 +496,14 @@ public class HostEditorFragment extends Fragment {
 			mPortContainer.setVisibility(View.VISIBLE);
 			mExpandCollapseButton.setVisibility(View.VISIBLE);
 			mNicknameItem.setVisibility(View.VISIBLE);
+			mPlainTextPasswordContainer.setVisibility(View.VISIBLE);
 		} else if (Telnet.getProtocolName().equals(protocol)) {
 			mUsernameContainer.setVisibility(View.GONE);
 			mHostnameContainer.setVisibility(View.VISIBLE);
 			mPortContainer.setVisibility(View.VISIBLE);
 			mExpandCollapseButton.setVisibility(View.VISIBLE);
 			mNicknameItem.setVisibility(View.VISIBLE);
+			mPlainTextPasswordContainer.setVisibility(View.VISIBLE);
 		} else {
 			// Local protocol has only one field, so no need to show the URI parts
 			// container.
@@ -739,6 +729,24 @@ public class HostEditorFragment extends Fragment {
 				} finally {
 					setFontSize(fontSize);
 				}
+			} else if (HostDatabase.FIELD_HOST_PASSWORD.equals(mFieldType)) {
+				mHost.setPassword(text);
+			} else if (mFieldType.startsWith(HostDatabase.FIELD_HOST_VIRTUAL + ":")) {
+				int[] co = mHost.getUlSize();
+				if (mFieldType.endsWith("C"))
+					try { co[2] = Integer.parseInt(text); } catch (Exception e) {}
+				else if (mFieldType.endsWith("R"))
+					try { co[3] = Integer.parseInt(text); } catch (Exception e) {}
+				mHost.setVirtualArea("" + co[2] + "x" + co[3]);
+			} else if (mFieldType.startsWith(HostDatabase.FIELD_HOST_CORNER + ":")) {
+				int[] co = mHost.getUlSize();
+				if (mFieldType.endsWith("C"))
+					try { co[0] = Integer.parseInt(text); } catch (Exception e) {}
+				else if (mFieldType.endsWith("R"))
+					try { co[1] = Integer.parseInt(text); } catch (Exception e) {}
+				mHost.setCornerArea("" + co[0] + "x" + co[1]);
+			} else if (HostDatabase.FIELD_HOST_BARCODE_SUFFIX.equals(mFieldType)) {
+				mHost.setBarcodeSuffix(text);
 			} else {
 				throw new RuntimeException("Invalid field type.");
 			}

@@ -52,7 +52,7 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 	public final static String TAG = "CB.HostDatabase";
 
 	public final static String DB_NAME = "hosts";
-	public final static int DB_VERSION = 25;
+	public final static int DB_VERSION = 26;
 
 	public final static String TABLE_HOSTS = "hosts";
 	public final static String FIELD_HOST_NICKNAME = "nickname";
@@ -73,6 +73,12 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 	public final static String FIELD_HOST_ENCODING = "encoding";
 	public final static String FIELD_HOST_STAYCONNECTED = "stayconnected";
 	public final static String FIELD_HOST_QUICKDISCONNECT = "quickdisconnect";
+	public final static String FIELD_HOST_AUTOCONNECT = "autoconnect";
+	public final static String FIELD_HOST_PASSWORD = "password";
+	public final static String FIELD_HOST_BARCODE_CONFIG = "bcconfig";
+	public final static String FIELD_HOST_BARCODE_SUFFIX = "bcsuffix";
+	public final static String FIELD_HOST_CORNER = "cornermode";
+	public final static String FIELD_HOST_VIRTUAL = "virtcolrow";
 
 	public final static String TABLE_KNOWNHOSTS = "knownhosts";
 	public final static String FIELD_KNOWNHOSTS_HOSTID = "hostid";
@@ -91,7 +97,6 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 	public final static String FIELD_COLOR_SCHEME = "scheme";
 	public final static String FIELD_COLOR_NUMBER = "number";
 	public final static String FIELD_COLOR_VALUE = "value";
-
 	public final static String TABLE_COLOR_DEFAULTS = "colorDefaults";
 	public final static String FIELD_COLOR_FG = "fg";
 	public final static String FIELD_COLOR_BG = "bg";
@@ -142,7 +147,12 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 			+ FIELD_HOST_COMPRESSION + " TEXT DEFAULT '" + false + "', "
 			+ FIELD_HOST_ENCODING + " TEXT DEFAULT '" + ENCODING_DEFAULT + "', "
 			+ FIELD_HOST_STAYCONNECTED + " TEXT DEFAULT '" + false + "', "
-			+ FIELD_HOST_QUICKDISCONNECT + " TEXT DEFAULT '" + false + "'";
+			+ FIELD_HOST_QUICKDISCONNECT + " TEXT DEFAULT '" + false + "'"
+			+ ", " + FIELD_HOST_AUTOCONNECT + " TEXT DEFAULT '" + false + "'"
+			+ ", " + FIELD_HOST_BARCODE_CONFIG + " TEXT DEFAULT ''"
+			+ ", " + FIELD_HOST_BARCODE_SUFFIX + " TEXT DEFAULT ''"
+			+ ", " + FIELD_HOST_CORNER + " TEXT DEFAULT ''"
+			+ ", " + FIELD_HOST_VIRTUAL + " TEXT DEFAULT ''";
 
 	public static final String CREATE_TABLE_HOSTS = "CREATE TABLE " + TABLE_HOSTS
 			+ " (" + TABLE_HOSTS_COLUMNS + ")";
@@ -396,7 +406,15 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 					+ " FROM " + TABLE_HOSTS);
 			db.execSQL("DROP TABLE " + TABLE_HOSTS);
 			db.execSQL("ALTER TABLE " + TABLE_HOSTS + "_upgrade RENAME TO " + TABLE_HOSTS);
+		case 25:
+			db.execSQL("ALTER TABLE " + TABLE_HOSTS
+					+ " ADD COLUMN " + FIELD_HOST_AUTOCONNECT + " TEXT DEFAULT '" + false + "'"
+					+ ", ADD COLUMN " + FIELD_HOST_BARCODE_CONFIG + " TEXT DEFAULT ''"
+					+ ", ADD COLUMN " + FIELD_HOST_BARCODE_SUFFIX + " TEXT DEFAULT ''"
+					+ ", ADD COLUMN " + FIELD_HOST_CORNER + " TEXT DEFAULT ''"
+					+ ", ADD COLUMN " + FIELD_HOST_VIRTUAL + " TEXT DEFAULT ''");
 		}
+
 	}
 
 	/**
