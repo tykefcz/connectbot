@@ -674,4 +674,6 @@
 	     password protected). -->
 	<string name="key_attribute_encrypted">(encrypted)</string>
 	<string name="pref_conn_autoconnect">Auto connect on start</string>
+	<string name="only_in_provisioning_mode">Only in provisioning mode</string>
+	<string name="pref_conn_allowclip">Enable clipboard functions</string>
 </resources>

@@ -60,7 +60,7 @@ public class HostBean extends AbstractBean {
 	private String password = null;
 	private int ulRows=0,ulCols=0,ulVirtCols=0,ulVirtRows=0;
 	private String barcodeSuffix="", barcodeConfig="";
-	private boolean autoConnect;
+	private boolean autoConnect=false,clipAllow=true;
 	public HostBean() {
 
 	}
@@ -209,6 +209,8 @@ public class HostBean extends AbstractBean {
 	}
 	public void setAutoconnect(boolean value) {autoConnect = value;}
 	public boolean getAutoconnect() { return autoConnect;}
+	public void setClipAllow(boolean value) {clipAllow = value;}
+	public boolean getClipAllow() { return clipAllow;}
 	public void setBarcodeConfig(String value) {barcodeConfig = value;}
 	public String getBarcodeConfig() { return barcodeConfig;}
 	public void setBarcodeSuffix(String value) {barcodeSuffix = value;}
@@ -276,6 +278,7 @@ public class HostBean extends AbstractBean {
 		values.put(HostDatabase.FIELD_HOST_BARCODE_CONFIG,barcodeConfig);
 		values.put(HostDatabase.FIELD_HOST_CORNER,ulCols==0 && ulRows==0 ? "" : ("" + ulCols + "x" + ulRows));
 		values.put(HostDatabase.FIELD_HOST_VIRTUAL,ulVirtCols==0 && ulVirtRows==0 ? "" : ("" + ulVirtCols + "x" + ulVirtRows));
+		values.put(HostDatabase.FIELD_HOST_ALLOWCLIP,Boolean.toString(clipAllow));
 
 		return values;
 	}
@@ -307,6 +310,7 @@ public class HostBean extends AbstractBean {
 		host.setAutoconnect(values.getAsBoolean(HostDatabase.FIELD_HOST_AUTOCONNECT));
 		host.setBarcodeConfig(values.getAsString(HostDatabase.FIELD_HOST_BARCODE_CONFIG));
 		host.setBarcodeSuffix(values.getAsString(HostDatabase.FIELD_HOST_BARCODE_SUFFIX));
+		host.setClipAllow(values.getAsBoolean(HostDatabase.FIELD_HOST_ALLOWCLIP));
 		return host;
 	}
 

@@ -130,18 +130,7 @@ public class TerminalView extends FrameLayout implements FontSizeChangedListener
 	private static final String SCREENREADER_INTENT_CATEGORY = "android.accessibilityservice.category.FEEDBACK_SPOKEN";
 	private int ulCols = 0;
 	private int ulRows = 0;
-	public boolean isCornerMode() {
-		return (ulCols > 0) && (ulRows > 0);
-	}
-	public void setCornerMode(int cols, int rows) {
-		ulCols = cols;
-		ulRows = rows;
-		if (bridge!=null) {
-			bridge.setCornerMode(cols, rows);
-			forceSize(80,25);
-		}
-		onFontSizeChanged(0); // the argument is unused
-	}
+
 	public TerminalView(Context context, TerminalBridge bridge, TerminalViewPager pager) {
 		super(context);
 
@@ -229,27 +218,10 @@ public class TerminalView extends FrameLayout implements FontSizeChangedListener
 
 		clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
 		prefs = PreferenceManager.getDefaultSharedPreferences(context);
-		/* tohle nefungovalo: vždy 0
-		Log.d(tag,"Honeywell??");
-		try {
-			Log.d(tag,"Honeywell processUserId = " + UserHelper.getProcessUserId());
-			// USER_OWNER = 0;  USER_ALL = -1; USER_CURRENT = -2;
-		} catch (Exception e) {
-			Log.d(tag, "Honeywel exc:" + e.toString());
+		if (bridge.isCornerMode()) {
+			ulCols = bridge.getVisibleCols();
+			ulRows = bridge.getVisibleRows();
 		}
-        */
-		/* tohle ma stejnou jednu restrikci ohledne audia
-		UserManager um = (UserManager) getContext().getSystemService(Context.USER_SERVICE);
-		Bundle bu = um.getUserRestrictions();
-		for (String key : bu.keySet()) {
-			Log.d(tag, "UserRestriction["+key+"]:" + bu.get(key).toString());
-		} */
-		try {
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-				Log.d(tag, "Api:" + Build.VERSION.SDK_INT + " model:" + Build.MODEL);
-				Log.d(tag, " hw:" + Build.HARDWARE + " brand:" + Build.BRAND + " device:" + Build.DEVICE + " manufacturer:" + Build.MANUFACTURER);
-			}
-		} catch (Exception e) {Log.d(tag,"ex:",e);}
 		bridge.addFontSizeChangedListener(this);
 		bridge.parentChanged(this);
 
@@ -510,7 +482,7 @@ public class TerminalView extends FrameLayout implements FontSizeChangedListener
 						bridge.charHeight);
 
 				int metaState = bridge.getKeyHandler().getMetaState();
-				if (y + bridge.charHeight < bridge.bitmap.getHeight()) {
+				if (y + bridge.charHeight < bridge.bitmap.getHeight() && y > 0) {
 					Bitmap underCursor = Bitmap.createBitmap(bridge.bitmap, x, y,
 							bridge.charWidth * (onWideCharacter ? 2 : 1), bridge.charHeight);
 					if (metaState == 0)

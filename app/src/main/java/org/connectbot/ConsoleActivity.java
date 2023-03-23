@@ -918,59 +918,75 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 			paste.setAlphabeticShortcut('v');
 		MenuItemCompat.setShowAsAction(paste, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
 		paste.setIcon(R.drawable.ic_action_paste);
-		paste.setEnabled(activeTerminal);
-		paste.setOnMenuItemClickListener(new OnMenuItemClickListener() {
-			@Override
-			public boolean onMenuItemClick(MenuItem item) {
-				pasteIntoTerminal();
-				return true;
-			}
-		});
+		if (cz.madeta.HonUtils.isProvisioningMode()) {
+			paste.setEnabled(activeTerminal);
+			paste.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+				@Override
+				public boolean onMenuItemClick(MenuItem item) {
+					pasteIntoTerminal();
+					return true;
+				}
+			});
+		} else {
+			paste.setEnabled(false);
+			paste.setVisible(false);
+		}
 
 		portForward = menu.add(R.string.console_menu_portforwards);
 		if (hardKeyboard)
 			portForward.setAlphabeticShortcut('f');
 		portForward.setIcon(android.R.drawable.ic_menu_manage);
-		portForward.setEnabled(sessionOpen && canForwardPorts);
-		portForward.setOnMenuItemClickListener(new OnMenuItemClickListener() {
-			@Override
-			public boolean onMenuItemClick(MenuItem item) {
-				TerminalView terminalView = adapter.getCurrentTerminalView();
-				TerminalBridge bridge = terminalView.bridge;
+		if (cz.madeta.HonUtils.isProvisioningMode()) {
+			portForward.setEnabled(sessionOpen && canForwardPorts);
+			portForward.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+				@Override
+				public boolean onMenuItemClick(MenuItem item) {
+					TerminalView terminalView = adapter.getCurrentTerminalView();
+					TerminalBridge bridge = terminalView.bridge;
 
-				Intent intent = new Intent(ConsoleActivity.this, PortForwardListActivity.class);
-				intent.putExtra(Intent.EXTRA_TITLE, bridge.host.getId());
-				ConsoleActivity.this.startActivityForResult(intent, REQUEST_EDIT);
-				return true;
-			}
-		});
+					Intent intent = new Intent(ConsoleActivity.this, PortForwardListActivity.class);
+					intent.putExtra(Intent.EXTRA_TITLE, bridge.host.getId());
+					ConsoleActivity.this.startActivityForResult(intent, REQUEST_EDIT);
+					return true;
+				}
+			});
+		} else {
+			portForward.setEnabled(false);
+			portForward.setVisible(false);
+		}
 
 		urlscan = menu.add(R.string.console_menu_urlscan);
 		if (hardKeyboard)
 			urlscan.setAlphabeticShortcut('u');
 		urlscan.setIcon(android.R.drawable.ic_menu_search);
-		urlscan.setEnabled(activeTerminal);
-		urlscan.setOnMenuItemClickListener(new OnMenuItemClickListener() {
-			@Override
-			public boolean onMenuItemClick(MenuItem item) {
-				final TerminalView terminalView = adapter.getCurrentTerminalView();
+		if (cz.madeta.HonUtils.isProvisioningMode()) {
 
-				List<String> urls = terminalView.bridge.scanForURLs();
+			urlscan.setEnabled(activeTerminal);
+			urlscan.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+				@Override
+				public boolean onMenuItemClick(MenuItem item) {
+					final TerminalView terminalView = adapter.getCurrentTerminalView();
 
-				Dialog urlDialog = new Dialog(ConsoleActivity.this);
-				urlDialog.setTitle(R.string.console_menu_urlscan);
+					List<String> urls = terminalView.bridge.scanForURLs();
 
-				ListView urlListView = new ListView(ConsoleActivity.this);
-				URLItemListener urlListener = new URLItemListener(ConsoleActivity.this);
-				urlListView.setOnItemClickListener(urlListener);
+					Dialog urlDialog = new Dialog(ConsoleActivity.this);
+					urlDialog.setTitle(R.string.console_menu_urlscan);
 
-				urlListView.setAdapter(new ArrayAdapter<>(ConsoleActivity.this, android.R.layout.simple_list_item_1, urls));
-				urlDialog.setContentView(urlListView);
-				urlDialog.show();
+					ListView urlListView = new ListView(ConsoleActivity.this);
+					URLItemListener urlListener = new URLItemListener(ConsoleActivity.this);
+					urlListView.setOnItemClickListener(urlListener);
 
-				return true;
-			}
-		});
+					urlListView.setAdapter(new ArrayAdapter<>(ConsoleActivity.this, android.R.layout.simple_list_item_1, urls));
+					urlDialog.setContentView(urlListView);
+					urlDialog.show();
+
+					return true;
+				}
+			});
+		} else {
+			urlscan.setEnabled(false);
+			urlscan.setVisible(false);
+		}
 
 		resize = menu.add(R.string.console_menu_resize);
 		if (hardKeyboard)
@@ -984,30 +1000,33 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 
 				@SuppressLint("InflateParams")  // Dialogs do not have a parent view.
 				final View resizeView = inflater.inflate(R.layout.dia_resize, null, false);
-				new androidx.appcompat.app.AlertDialog.Builder(
-								ConsoleActivity.this, R.style.AlertDialogTheme)
-						.setView(resizeView)
-						.setPositiveButton(R.string.button_resize, new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								int width, height;
-								try {
-									width = Integer.parseInt(((EditText) resizeView
-											.findViewById(R.id.width))
-											.getText().toString());
-									height = Integer.parseInt(((EditText) resizeView
-											.findViewById(R.id.height))
-											.getText().toString());
-								} catch (NumberFormatException nfe) {
-									// TODO change this to a real dialog where we can
-									// make the input boxes turn red to indicate an error.
-									return;
+				if (terminalView.bridge.isCornerMode()) {
+					terminalView.forceSize(80, 25);
+				} else {
+					new androidx.appcompat.app.AlertDialog.Builder(
+							ConsoleActivity.this, R.style.AlertDialogTheme)
+							.setView(resizeView)
+							.setPositiveButton(R.string.button_resize, new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									int width, height;
+									try {
+										width = Integer.parseInt(((EditText) resizeView
+												.findViewById(R.id.width))
+												.getText().toString());
+										height = Integer.parseInt(((EditText) resizeView
+												.findViewById(R.id.height))
+												.getText().toString());
+									} catch (NumberFormatException nfe) {
+										// TODO change this to a real dialog where we can
+										// make the input boxes turn red to indicate an error.
+										return;
+									}
+
+									terminalView.forceSize(width, height);
 								}
-
-								terminalView.forceSize(width, height);
-							}
-						}).setNegativeButton(android.R.string.cancel, null).create().show();
-
+							}).setNegativeButton(android.R.string.cancel, null).create().show();
+				}
 				return true;
 			}
 		});
@@ -1399,7 +1418,6 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 
 			if (bridge.host.getProtocol().equals("ssh")) {
 				pager.setEnabled(false);
-				terminal.setCornerMode(22, 14);
 				// ro.system.build.id + ro.system.build.version.incremental = 90.00.16 + 0264
 				// nebo bez system taky (ro.build.id....)
 				// ro.hsm.extserial.num = serialno
@@ -1434,13 +1452,14 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 					}
 				} catch (Exception e) {}
 				if (ansback.equals("")) ansback="droidssh";
-				bridge.setAnswerBack(ansback);
+				String termtype = prefs.getString(PreferenceConstants.EMULATION,"xterm");
+				bridge.setAnswerBack(ansback,"xterm");
 			}
 
 			// set the terminal name overlay text
 			TextView terminalNameOverlay = view.findViewById(R.id.terminal_name_overlay);
+			String locip = null;
 			if (bridge.isUsingNetwork() && bridge.isCornerMode()) {
-				String locip = null;
 				try {
 					if (adapter.localIp == null) {
 						for (Enumeration<NetworkInterface> en = java.net.NetworkInterface.getNetworkInterfaces();
@@ -1470,7 +1489,8 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 				terminalNameOverlay.setText(locip);
 			} else
 				terminalNameOverlay.setText(bridge.host.getNickname());
-
+			if (locip != null && bridge.buffer instanceof vt320)
+				((vt320)bridge.buffer).localIp = locip;
 			// Tag the view with its bridge so it can be retrieved later.
 			view.setTag(bridge);
 			container.addView(view);

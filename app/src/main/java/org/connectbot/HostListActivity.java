@@ -31,6 +31,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.widget.Toast;
 import androidx.annotation.StyleRes;
 import androidx.annotation.VisibleForTesting;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -80,6 +81,7 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 
 	private MenuItem disconnectall;
 
+	private MenuItem help,settings,keys;
 	private SharedPreferences prefs = null;
 
 	protected boolean makingShortcut = false;
@@ -245,7 +247,10 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 		sortcolor.setVisible(!sortedByColor);
 		sortlast.setVisible(sortedByColor);
 		disconnectall.setEnabled(bound != null && bound.getBridges().size() > 0);
-
+		boolean provismode = cz.madeta.HonUtils.isProvisioningMode();
+		keys.setEnabled(provismode);
+		settings.setEnabled(provismode);
+		help.setEnabled(provismode);
 		return true;
 	}
 
@@ -279,7 +284,7 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 			}
 		});
 
-		MenuItem keys = menu.add(R.string.list_menu_pubkeys);
+		keys = menu.add(R.string.list_menu_pubkeys);
 		keys.setIcon(android.R.drawable.ic_lock_lock);
 		keys.setIntent(new Intent(HostListActivity.this, PubkeyListActivity.class));
 
@@ -297,11 +302,11 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 			}
 		});
 
-		MenuItem settings = menu.add(R.string.list_menu_settings);
+		settings = menu.add(R.string.list_menu_settings);
 		settings.setIcon(android.R.drawable.ic_menu_preferences);
 		settings.setIntent(new Intent(HostListActivity.this, SettingsActivity.class));
 
-		MenuItem help = menu.add(R.string.title_help);
+		help = menu.add(R.string.title_help);
 		help.setIcon(android.R.drawable.ic_menu_help);
 		help.setIntent(new Intent(HostListActivity.this, HelpActivity.class));
 
@@ -455,55 +460,70 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 					return true;
 				}
 			});
-
+			boolean provismode = cz.madeta.HonUtils.isProvisioningMode();
 			MenuItem edit = menu.add(R.string.list_host_edit);
 			edit.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 				@Override
 				public boolean onMenuItemClick(MenuItem item) {
-					Intent intent = EditHostActivity.createIntentForExistingHost(
-							HostListActivity.this, host.getId());
-					HostListActivity.this.startActivityForResult(intent, REQUEST_EDIT);
+					if (cz.madeta.HonUtils.isProvisioningMode()) {
+						Intent intent = EditHostActivity.createIntentForExistingHost(
+								HostListActivity.this, host.getId());
+						HostListActivity.this.startActivityForResult(intent, REQUEST_EDIT);
+					} else {
+						Toast.makeText(HostListActivity.this,R.string.only_in_provisioning_mode,Toast.LENGTH_LONG).show();
+					}
 					return true;
 				}
 			});
+			edit.setEnabled(provismode);
 
 			MenuItem portForwards = menu.add(R.string.list_host_portforwards);
 			portForwards.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 				@Override
 				public boolean onMenuItemClick(MenuItem item) {
-					Intent intent = new Intent(HostListActivity.this, PortForwardListActivity.class);
-					intent.putExtra(Intent.EXTRA_TITLE, host.getId());
-					HostListActivity.this.startActivityForResult(intent, REQUEST_EDIT);
+					if (cz.madeta.HonUtils.isProvisioningMode()) {
+						Intent intent = new Intent(HostListActivity.this, PortForwardListActivity.class);
+						intent.putExtra(Intent.EXTRA_TITLE, host.getId());
+						HostListActivity.this.startActivityForResult(intent, REQUEST_EDIT);
+					} else {
+						Toast.makeText(HostListActivity.this,R.string.only_in_provisioning_mode,Toast.LENGTH_LONG).show();
+					}
 					return true;
 				}
 			});
 			if (!TransportFactory.canForwardPorts(host.getProtocol()))
 				portForwards.setEnabled(false);
+			else
+				portForwards.setEnabled(provismode);
 
 			MenuItem delete = menu.add(R.string.list_host_delete);
 			delete.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 				@Override
 				public boolean onMenuItemClick(MenuItem item) {
 					// prompt user to make sure they really want this
-					new androidx.appcompat.app.AlertDialog.Builder(
-									HostListActivity.this, R.style.AlertDialogTheme)
-							.setMessage(getString(R.string.delete_message, host.getNickname()))
-							.setPositiveButton(R.string.delete_pos, new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									// make sure we disconnect
-									if (bridge != null)
-										bridge.dispatchDisconnect(true);
+					if (cz.madeta.HonUtils.isProvisioningMode()) {
+						new androidx.appcompat.app.AlertDialog.Builder(
+								HostListActivity.this, R.style.AlertDialogTheme)
+								.setMessage(getString(R.string.delete_message, host.getNickname()))
+								.setPositiveButton(R.string.delete_pos, new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										// make sure we disconnect
+										if (bridge != null)
+											bridge.dispatchDisconnect(true);
 
-									hostdb.deleteHost(host);
-									updateList();
-								}
-							})
-							.setNegativeButton(R.string.delete_neg, null).create().show();
-
+										hostdb.deleteHost(host);
+										updateList();
+									}
+								})
+								.setNegativeButton(R.string.delete_neg, null).create().show();
+					} else {
+						Toast.makeText(HostListActivity.this,R.string.only_in_provisioning_mode,Toast.LENGTH_LONG).show();
+					}
 					return true;
 				}
 			});
+			delete.setEnabled(provismode);
 		}
 	}
 

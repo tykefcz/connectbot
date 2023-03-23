@@ -281,4 +281,7 @@
   <string name="key_type_ed25519">Ed25519</string>
   <string name="key_type_unknown">Neznámý typ klíče</string>
   <string name="key_attribute_encrypted">(zašifrováno)</string>
+  <string name="pref_conn_autoconnect">Automaticky spustit</string>
+  <string name="only_in_provisioning_mode">Dostupné pouze v provisioning režimu</string>
+  <string name="pref_conn_allowclip">Povolit funkce schránky</string>
 </resources>

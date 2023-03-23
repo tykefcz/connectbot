@@ -130,7 +130,7 @@ public class HostEditorFragment extends Fragment {
 	private HostTextFieldWatcher mFontSizeTextChangeListener;
 
 	private CheckableMenuItem mAutoConnect;
-	//private CheckableMenuItem mCornerMode;
+	private CheckableMenuItem mAllowClipboard;
 	private View mPlainTextPasswordContainer;
 	private EditText mCornerCols,mCornerRows,mVirtualCols,mVirtualRows,mPlainTextPassword;
 	private EditText mBarcodeSuffix;
@@ -437,37 +437,42 @@ public class HostEditorFragment extends Fragment {
 		mPostLoginAutomationField.setText(mHost.getPostLogin());
 		mPostLoginAutomationField.addTextChangedListener(
 				new HostTextFieldWatcher(HostDatabase.FIELD_HOST_POSTLOGIN));
-		try {
-			mAutoConnect = view.findViewById(R.id.host_autoconnect);
-			mAutoConnect.setChecked(mHost.getAutoconnect());
-			mAutoConnect.setOnCheckedChangeListener((buttonView, isChecked) -> {
-				mHost.setAutoconnect(isChecked);
-				handleHostChange();
-			});
-			int[] ulc = mHost.getUlSize();
 
-			mCornerCols = view.findViewById(R.id.ulcr_edit_cols);
-			mCornerCols.setText(ulc[0]);
-			mCornerCols.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_CORNER + ":C"));
+		mAutoConnect = view.findViewById(R.id.host_autoconnect);
+		mAutoConnect.setChecked(mHost.getAutoconnect());
+		mAutoConnect.setOnCheckedChangeListener((buttonView, isChecked) -> {
+			mHost.setAutoconnect(isChecked);
+			handleHostChange();
+		});
 
-			mCornerRows = view.findViewById(R.id.ulcr_edit_rows);
-			mCornerRows.setText(ulc[1]);
-			mCornerRows.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_CORNER + ":R"));
+		mAllowClipboard = view.findViewById(R.id.host_autoconnect);
+		mAllowClipboard.setChecked(mHost.getClipAllow());
+		mAllowClipboard.setOnCheckedChangeListener((buttonView, isChecked) -> {
+			mHost.setClipAllow(isChecked);
+			handleHostChange();
+		});
 
-			mVirtualCols = view.findViewById(R.id.ulcr_edit_vcols);
-			mVirtualCols.setText(ulc[2]);
-			mVirtualCols.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_VIRTUAL + ":C"));
+		int[] ulc = mHost.getUlSize();
 
-			mVirtualRows = view.findViewById(R.id.ulcr_edit_vrows);
-			mVirtualRows.setText(ulc[3]);
-			mVirtualRows.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_VIRTUAL + ":R"));
+		mCornerCols = view.findViewById(R.id.ulcr_edit_cols);
+		mCornerCols.setText(ulc[0]==0 ? "" : ("" + ulc[0]));
+		mCornerCols.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_CORNER + ":C"));
 
-			mBarcodeSuffix = view.findViewById(R.id.bcsuffix_field);
-			mBarcodeSuffix.setText(mHost.getBarcodeSuffix());
-			mBarcodeSuffix.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_BARCODE_SUFFIX));
-		} catch (Exception e) {
-			Log.e("HostEditFragment","ex",e);
-		}
+		mCornerRows = view.findViewById(R.id.ulcr_edit_rows);
+		mCornerRows.setText(ulc[1]==0 ? "" : ("" + ulc[1]));
+		mCornerRows.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_CORNER + ":R"));
+
+		mVirtualCols = view.findViewById(R.id.ulcr_edit_vcols);
+		mVirtualCols.setText(ulc[2]==0 ? "" : ("" + ulc[2]));
+		mVirtualCols.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_VIRTUAL + ":C"));
+
+		mVirtualRows = view.findViewById(R.id.ulcr_edit_vrows);
+		mVirtualRows.setText(ulc[3]==0 ? "" : ("" + ulc[3]));
+		mVirtualRows.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_VIRTUAL + ":R"));
+
+		mBarcodeSuffix = view.findViewById(R.id.bcsuffix_field);
+		mBarcodeSuffix.setText(mHost.getBarcodeSuffix());
+		mBarcodeSuffix.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_BARCODE_SUFFIX));
 		setUriPartsContainerExpanded(mIsUriEditorExpanded);
 
 		return view;

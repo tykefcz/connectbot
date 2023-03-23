@@ -73,12 +73,13 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 	public final static String FIELD_HOST_ENCODING = "encoding";
 	public final static String FIELD_HOST_STAYCONNECTED = "stayconnected";
 	public final static String FIELD_HOST_QUICKDISCONNECT = "quickdisconnect";
-	public final static String FIELD_HOST_AUTOCONNECT = "autoconnect";
 	public final static String FIELD_HOST_PASSWORD = "password";
+	public final static String FIELD_HOST_AUTOCONNECT = "autoconnect";
 	public final static String FIELD_HOST_BARCODE_CONFIG = "bcconfig";
 	public final static String FIELD_HOST_BARCODE_SUFFIX = "bcsuffix";
 	public final static String FIELD_HOST_CORNER = "cornermode";
 	public final static String FIELD_HOST_VIRTUAL = "virtcolrow";
+	public final static String FIELD_HOST_ALLOWCLIP = "allowclip";
 
 	public final static String TABLE_KNOWNHOSTS = "knownhosts";
 	public final static String FIELD_KNOWNHOSTS_HOSTID = "hostid";
@@ -148,11 +149,13 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 			+ FIELD_HOST_ENCODING + " TEXT DEFAULT '" + ENCODING_DEFAULT + "', "
 			+ FIELD_HOST_STAYCONNECTED + " TEXT DEFAULT '" + false + "', "
 			+ FIELD_HOST_QUICKDISCONNECT + " TEXT DEFAULT '" + false + "'"
+			+ ", " + FIELD_HOST_PASSWORD + " TEXT DEFAULT ''"
 			+ ", " + FIELD_HOST_AUTOCONNECT + " TEXT DEFAULT '" + false + "'"
 			+ ", " + FIELD_HOST_BARCODE_CONFIG + " TEXT DEFAULT ''"
 			+ ", " + FIELD_HOST_BARCODE_SUFFIX + " TEXT DEFAULT ''"
 			+ ", " + FIELD_HOST_CORNER + " TEXT DEFAULT ''"
-			+ ", " + FIELD_HOST_VIRTUAL + " TEXT DEFAULT ''";
+			+ ", " + FIELD_HOST_VIRTUAL + " TEXT DEFAULT ''"
+			+ ", " + FIELD_HOST_ALLOWCLIP + " TEXT DEFAULT '" + false + "'";
 
 	public static final String CREATE_TABLE_HOSTS = "CREATE TABLE " + TABLE_HOSTS
 			+ " (" + TABLE_HOSTS_COLUMNS + ")";
@@ -412,7 +415,9 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 					+ ", ADD COLUMN " + FIELD_HOST_BARCODE_CONFIG + " TEXT DEFAULT ''"
 					+ ", ADD COLUMN " + FIELD_HOST_BARCODE_SUFFIX + " TEXT DEFAULT ''"
 					+ ", ADD COLUMN " + FIELD_HOST_CORNER + " TEXT DEFAULT ''"
-					+ ", ADD COLUMN " + FIELD_HOST_VIRTUAL + " TEXT DEFAULT ''");
+					+ ", ADD COLUMN " + FIELD_HOST_VIRTUAL + " TEXT DEFAULT ''"
+					+ ", ADD COLUMN " + FIELD_HOST_ALLOWCLIP + " TEXT DEFAULT '" + true + "'"
+			);
 		}
 
 	}
@@ -524,7 +529,14 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 			COL_COMPRESSION = c.getColumnIndexOrThrow(FIELD_HOST_COMPRESSION),
 			COL_ENCODING = c.getColumnIndexOrThrow(FIELD_HOST_ENCODING),
 			COL_STAYCONNECTED = c.getColumnIndexOrThrow(FIELD_HOST_STAYCONNECTED),
-			COL_QUICKDISCONNECT = c.getColumnIndexOrThrow(FIELD_HOST_QUICKDISCONNECT);
+			COL_QUICKDISCONNECT = c.getColumnIndexOrThrow(FIELD_HOST_QUICKDISCONNECT)
+			,COL_PASSWORD = c.getColumnIndexOrThrow(FIELD_HOST_PASSWORD)
+			,COL_AUTOCONNECT = c.getColumnIndexOrThrow(FIELD_HOST_AUTOCONNECT)
+			,COL_BCCONFIG = c.getColumnIndexOrThrow(FIELD_HOST_BARCODE_CONFIG)
+			,COL_BCSUFFIX = c.getColumnIndexOrThrow(FIELD_HOST_BARCODE_SUFFIX)
+			,COL_CORNER = c.getColumnIndexOrThrow(FIELD_HOST_CORNER)
+			,COL_VIRTUAL = c.getColumnIndexOrThrow(FIELD_HOST_VIRTUAL)
+			;
 
 		while (c.moveToNext()) {
 			HostBean host = new HostBean();
@@ -538,12 +550,7 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 			host.setLastConnect(c.getLong(COL_LASTCONNECT));
 			host.setColor(c.getString(COL_COLOR));
 			host.setUseKeys(Boolean.parseBoolean(c.getString(COL_USEKEYS)));
-			String x = c.getString(COL_USEAUTHAGENT);
-			if (x.startsWith(HostDatabase.AUTHAGENT_NO + ":")) {
-				host.setUseAuthAgent(HostDatabase.AUTHAGENT_NO);
-				host.setPassword(x.split(":",2)[1]);
-			} else
-				host.setUseAuthAgent(x);
+			host.setUseAuthAgent(c.getString(COL_USEAUTHAGENT));
 			host.setPostLogin(c.getString(COL_POSTLOGIN));
 			host.setPubkeyId(c.getLong(COL_PUBKEYID));
 			host.setWantSession(Boolean.parseBoolean(c.getString(COL_WANTSESSION)));
@@ -554,6 +561,12 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 			host.setStayConnected(Boolean.parseBoolean(c.getString(COL_STAYCONNECTED)));
 			host.setQuickDisconnect(Boolean.parseBoolean(c.getString(COL_QUICKDISCONNECT)));
 
+			host.setPassword(c.getString(COL_PASSWORD));
+			host.setBarcodeSuffix(c.getString(COL_BCSUFFIX));
+			host.setBarcodeConfig(c.getString(COL_BCCONFIG));
+			host.setAutoconnect(Boolean.parseBoolean(c.getString(COL_AUTOCONNECT)));
+			host.setCornerArea(c.getString(COL_CORNER));
+			host.setVirtualArea(c.getString(COL_VIRTUAL));
 			hosts.add(host);
 		}
 

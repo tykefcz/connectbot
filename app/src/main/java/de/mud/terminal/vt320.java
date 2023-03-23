@@ -25,7 +25,10 @@
 
 package de.mud.terminal;
 
+import android.app.ActivityManager;
+import android.os.Build;
 import android.text.AndroidCharacter;
+import cz.madeta.droidssh.BuildConfig;
 
 import java.util.Properties;
 
@@ -585,10 +588,23 @@ public void setScreenSize(int c, int r, boolean broadcast) {
       NextScn[0] = NextScn[1] = NextScn[2] = NextScn[3] = "\u001b[G";
       // more theoretically.
     }
+    if (terminalID.equals("xterm")) {
+      FunctionKey[1] = "\u001b[OP";  FunctionKey[2] = "\u001b[OQ";
+      FunctionKey[3] = "\u001b[OR";  FunctionKey[4] = "\u001b[OS";
+      FunctionKey[5] = "\u001b[[15~";  FunctionKey[6] = "\u001b[[17~";
+      FunctionKey[7] = "\u001b[[18~";  FunctionKey[8] = "\u001b[[19~";
+      FunctionKey[9] = "\u001b[[20~";  FunctionKey[10] = "\u001b[[21~";
+      FunctionKey[11] = "\u001b[[22~"; FunctionKey[12] = "\u001b[[23~";
+      PrevScn[0] = PrevScn[1] = PrevScn[2] = PrevScn[3] = "\u001b[[5~";
+      NextScn[0] = NextScn[1] = NextScn[2] = NextScn[3] = "\u001b[[6~";
+      KeyUp[0] = "\u001b[OA"; KeyDown[0] = "\u001b[OB"; KeyRight[0]="\u001b[OC"; KeyLeft[0]="\u001b[OD";
+    }
   }
 
   public void setAnswerBack(String ab) {
     this.answerBack = unEscape(ab);
+    if (this.answer5 == null)
+      this.answer5 = this.answerBack;
   }
 
   /**
@@ -833,7 +849,7 @@ public void setScreenSize(int c, int r, boolean broadcast) {
 
   private String KeyHome[], KeyEnd[], Insert[], Remove[], PrevScn[], NextScn[];
   private String Escape[], BackSpace[], NUMDot[], NUMPlus[];
-
+  private String answer5=null;
   private String osc,dcs;  /* to memorize OSC & DCS control sequence */
 
   /** vt320 state variable (internal) */
@@ -1707,7 +1723,10 @@ public void setScreenSize(int c, int r, boolean broadcast) {
             lastwaslf = 0;
             break;
           case 5: /* ENQ */
-            write(answerBack, false);
+            if (answer5 == null)
+              write(answerBack, false);
+            else
+              write(answer5, false);
             break;
           case 12:
             /* FormFeed, Home for the BBS world */
@@ -2027,6 +2046,8 @@ public void setScreenSize(int c, int r, boolean broadcast) {
           case 'O': // SS3
             onegl = 3;
             break;
+          case 'Z': // DECID: terminal type query
+            break;
           case '=':
             /*application keypad*/
             if (debug > 0)
@@ -2298,6 +2319,9 @@ public void setScreenSize(int c, int r, boolean broadcast) {
                   /* 12 - local echo off */
                   /* 18 - DECPFF - Printer Form Feed Mode -> On */
                   /* 19 - DECPEX - Printer Extent Mode -> Screen */
+                  /* 1049 - cursor & Alternate screen */
+                  /* 3 - DECCOLM: 80/132 columns */
+              // ToDo G 0 \e[?3l -
                 default:
                   debug("ESC [ ? " + DCEvars[0] + " h, unsupported.");
                   break;
@@ -2859,6 +2883,15 @@ public void setScreenSize(int c, int r, boolean broadcast) {
                 if (debug > 1)
                   debug("ESC[6n");
                 break;
+              case 8:
+                // Madeta pc info
+                // ;PuTTy Release M0.70.65;Linux version 5.14.0-1048-oem;sysuser gabriel;ip 10.60.14.7;mem 16109756 kB;cpu 11th Gen Intel(R) Core(TM) i7-11700 @ 2.50GHz;
+                /* ActivityManager.MemoryInfo memoryInfo = null;
+                try {memoryInfo = new ActivityManager.MemoryInfo();
+                  ((ActivityManager) getSystemService(Context.ACTIVITY_SERVICE)).getMemoryInfo(memoryInfo); */
+                writeSpecial(";DroidSSH " + BuildConfig.VERSION_CODE + ";Android " + Build.VERSION.RELEASE
+                        + ";no user;ip " + localIp + ";mem ?;" + answer5 + ";");
+                break;
               default:
                 if (debug > 0)
                   debug("ESC [ " + DCEvars[0] + " n??");
@@ -3128,4 +3161,7 @@ public void setScreenSize(int c, int r, boolean broadcast) {
     /*FIXME:*/
     term_state = TSTATE_DATA;
   }
+  public void setAnswer5(String ans5) { answer5 = ans5; }
+  public String getAnswer5() {return answer5;}
+  public String localIp = "0.0.0.0";
 }

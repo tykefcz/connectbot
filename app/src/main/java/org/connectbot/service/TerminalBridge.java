@@ -83,7 +83,7 @@ public class TerminalBridge implements VDUDisplay {
 
 	private Relay relay;
 
-	private final String emulation;
+	private String emulation;
 	private final int scrollback;
 
 	public Bitmap bitmap = null;
@@ -129,10 +129,16 @@ public class TerminalBridge implements VDUDisplay {
 	public boolean isCornerMode() {
 		return (ulCols > 0) && (ulRows > 0);
 	}
-	public void setCornerMode(int cols, int rows) {
+	public void setCornerMode(int cols, int rows, int vCols, int vRows) {
 		ulCols = cols;
 		ulRows = rows;
+		columns = vCols;
+		this.rows = vRows;
 	}
+	public int getCols() {return columns;}
+	public int getRows() {return rows;}
+	public int getVisibleCols() {return ulCols;}
+	public int getVisibleRows() {return ulRows;}
 	/**
 	 * Create a new terminal bridge suitable for unit testing.
 	 */
@@ -189,6 +195,10 @@ public class TerminalBridge implements VDUDisplay {
 		defaultPaint.setAntiAlias(true);
 		defaultPaint.setTypeface(Typeface.MONOSPACE);
 		defaultPaint.setFakeBoldText(true); // more readable?
+		int[] ul = host.getUlSize();
+		if (ul[0] > 0 && ul[1] > 0) {
+			setCornerMode(ul[0], ul[1], ul[2], ul[3]);
+		}
 
 		refreshOverlayFontSize();
 
@@ -196,11 +206,16 @@ public class TerminalBridge implements VDUDisplay {
 
 		fontSizeChangedListeners = new ArrayList<>();
 
-		int hostFontSizeDp = host.getFontSize();
-		if (hostFontSizeDp <= 0) {
-			hostFontSizeDp = DEFAULT_FONT_SIZE_DP;
+		if (isCornerMode()) {
+			forcedSize = true;
+
+		} else {
+			int hostFontSizeDp = host.getFontSize();
+			if (hostFontSizeDp <= 0) {
+				hostFontSizeDp = DEFAULT_FONT_SIZE_DP;
+			}
+			setFontSize(hostFontSizeDp);
 		}
-		setFontSize(hostFontSizeDp);
 
 		// create terminal buffer and handle outgoing data
 		// this is probably status reply information
@@ -400,10 +415,14 @@ public class TerminalBridge implements VDUDisplay {
 		injectStringThread.start();
 	}
 
-	public void setAnswerBack(String a) {
-		((vt320) buffer).setAnswerBack(a);
-		((vt320) buffer).setBackspace(2);
-
+	private String ansback = "DroidSSH";
+	public void setAnswerBack(String a, String termid) {
+		ansback = a; emulation = termid;
+		if (!disconnected) {
+			((vt320) buffer).setTerminalID(termid);
+			((vt320) buffer).setAnswerBack(termid);
+			((vt320) buffer).setAnswer5(a);
+		}
 	}
 	/**
 	 * Internal method to request actual PTY terminal once we've finished
@@ -420,6 +439,7 @@ public class TerminalBridge implements VDUDisplay {
 		// previously tried vt100 and xterm for emulation modes
 		// "screen" works the best for color and escape codes
 		((vt320) buffer).setAnswerBack(emulation);
+		((vt320) buffer).setAnswer5(ansback);
 
 		if (HostDatabase.DELKEY_BACKSPACE.equals(host.getDelKey()))
 			((vt320) buffer).setBackspace(vt320.DELETE_IS_BACKSPACE);
@@ -626,8 +646,8 @@ public class TerminalBridge implements VDUDisplay {
 
 			if (isCornerMode()) {
 				// ToDo CornerMode real size config
-				newColumns = 80;
-				newRows = 24;
+				newColumns = columns <= ulCols?ulCols:columns;
+				newRows = rows<=ulRows?ulRows:rows;
 			} else {
 				newColumns = width / charWidth;
 				newRows = height / charHeight;
@@ -946,7 +966,10 @@ public class TerminalBridge implements VDUDisplay {
 			displayDensity = newDensity;
 			systemFontScale = newFontScale;
 			defaultPaint.setTextSize((int) (fontSizeDp * displayDensity * systemFontScale + 0.5f));
-			setFontSize(fontSizeDp);
+			if (forcedSize)
+				resizeComputed(columns<=0?80:columns,rows<=0?25:rows,manager.getResources().getDisplayMetrics().widthPixels,manager.getResources().getDisplayMetrics().heightPixels * 7/8);
+			else
+				setFontSize(fontSizeDp);
 		}
 	}
 
