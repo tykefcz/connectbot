@@ -868,7 +868,7 @@ public void setScreenSize(int c, int r, boolean broadcast) {
    * @param tmp the string to be parsed
    * @return a unescaped string
    */
-  static String unEscape(String tmp) {
+  public static String unEscape(String tmp) {
     int idx = 0, oldidx = 0;
     String cmd;
     // f.println("unescape("+tmp+")");
@@ -898,6 +898,14 @@ public void setScreenSize(int c, int r, boolean broadcast) {
           break;
         case 'a':
           cmd += "\u0012";
+          break;
+        case 'x':
+          if (tmp.length() >= (idx+3)) {
+            int i = 0x20;
+            try {i = Integer.parseInt(tmp.substring(idx+1,idx+3),16);} catch (Exception e) {}
+            cmd += (char) (i & 0xFF);
+            idx+=3;
+          }
           break;
         default :
           if ((tmp.charAt(idx) >= '0') && (tmp.charAt(idx) <= '9')) {

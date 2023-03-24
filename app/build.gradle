@@ -37,8 +37,10 @@ android {
 
 	defaultConfig {
 		applicationId "cz.madeta.droidssh"
-		versionName androidGitVersion.name()
-		versionCode androidGitVersion.code()
+		//versionName androidGitVersion.name()
+		//versionCode androidGitVersion.code()
+		versionName	"1.9.9"
+		versionCode 10909000
 
 		minSdkVersion 24
 		targetSdkVersion 31

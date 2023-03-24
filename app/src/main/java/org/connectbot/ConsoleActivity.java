@@ -106,6 +106,7 @@ import android.widget.TextView;
 import de.mud.terminal.vt320;
 
 import static cz.madeta.HonUtils.getSysProp;
+import static de.mud.terminal.vt320.unEscape;
 
 public class ConsoleActivity extends AppCompatActivity implements BridgeDisconnectedListener, BarcodeReader.BarcodeListener {
 	public final static String TAG = "CB.ConsoleActivity";
@@ -198,7 +199,7 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 	private boolean inActionBarMenu = false;
 	private boolean titleBarHide;
 	private boolean keyboardAlwaysVisible = false;
-	private String bcFnc1 = "~", bcPostFix = "\n";
+
 	private final ServiceConnection connection = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
@@ -917,8 +918,10 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 		if (hardKeyboard)
 			paste.setAlphabeticShortcut('v');
 		MenuItemCompat.setShowAsAction(paste, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
-		paste.setIcon(R.drawable.ic_action_paste);
-		if (cz.madeta.HonUtils.isProvisioningMode()) {
+		boolean canPaste = false;
+		try {canPaste = adapter.getCurrentTerminalView().bridge.isClipEnabled();} catch (Exception e) {}
+		if (canPaste) {
+			paste.setIcon(R.drawable.ic_action_paste);
 			paste.setEnabled(activeTerminal);
 			paste.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 				@Override
@@ -928,8 +931,18 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 				}
 			});
 		} else {
-			paste.setEnabled(false);
-			paste.setVisible(false);
+			paste.setIcon(R.drawable.ic_sync);
+			paste.setEnabled(true);
+			paste.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+				@Override
+				public boolean onMenuItemClick(MenuItem item) {
+					final TerminalView terminalView = adapter.getCurrentTerminalView();
+					if (terminalView.bridge.isCornerMode()) {
+						terminalView.forceSize(80, 25);
+					}
+					return true;
+				}
+			});
 		}
 
 		portForward = menu.add(R.string.console_menu_portforwards);
@@ -1593,11 +1606,17 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 		TerminalView terminal = adapter.getCurrentTerminalView();
 		if (terminal == null) return;
 		TerminalBridge bridge = terminal.bridge;
-		if (bridge.isDisconnected() || !bridge.isSessionOpen()) return;
+		if (bridge==null || bridge.isDisconnected() || !bridge.isSessionOpen()) return;
+		String prefix = barcodeReadEvent.getAimId(), suffix = terminal.bridge.getBcPostfix();
+		if (!terminal.bridge.isBcAimPrefix()) prefix = "";
 		if (barcodeReadEvent.getCodeId().equals("I")) { // EAN128
-			bridge.injectString(bcFnc1 + barcodeReadEvent.getBarcodeData().replaceAll("\u001d",bcFnc1) + bcPostFix);
+			String x = terminal.bridge.getSsccPrefix();
+			if (x!=null && !x.equals("")) prefix = x;
+			x = terminal.bridge.getSsccF1();
+			if (x==null) x = ""; else x=unEscape(x);
+			bridge.injectString(unEscape(prefix) + barcodeReadEvent.getBarcodeData().replaceAll("\u001d",x) + unEscape(suffix));
 		} else {
-			bridge.injectString(barcodeReadEvent.getBarcodeData() + bcPostFix);
+			bridge.injectString(unEscape(prefix) + barcodeReadEvent.getBarcodeData() + unEscape(suffix));
 		}
 	}
 

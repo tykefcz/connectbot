@@ -155,7 +155,7 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 			+ ", " + FIELD_HOST_BARCODE_SUFFIX + " TEXT DEFAULT ''"
 			+ ", " + FIELD_HOST_CORNER + " TEXT DEFAULT ''"
 			+ ", " + FIELD_HOST_VIRTUAL + " TEXT DEFAULT ''"
-			+ ", " + FIELD_HOST_ALLOWCLIP + " TEXT DEFAULT '" + false + "'";
+			+ ", " + FIELD_HOST_ALLOWCLIP + " TEXT DEFAULT '" + true + "'";
 
 	public static final String CREATE_TABLE_HOSTS = "CREATE TABLE " + TABLE_HOSTS
 			+ " (" + TABLE_HOSTS_COLUMNS + ")";
@@ -536,6 +536,7 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 			,COL_BCSUFFIX = c.getColumnIndexOrThrow(FIELD_HOST_BARCODE_SUFFIX)
 			,COL_CORNER = c.getColumnIndexOrThrow(FIELD_HOST_CORNER)
 			,COL_VIRTUAL = c.getColumnIndexOrThrow(FIELD_HOST_VIRTUAL)
+			,COL_ALLOWCLIP = c.getColumnIndexOrThrow(FIELD_HOST_ALLOWCLIP)
 			;
 
 		while (c.moveToNext()) {
@@ -567,6 +568,7 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 			host.setAutoconnect(Boolean.parseBoolean(c.getString(COL_AUTOCONNECT)));
 			host.setCornerArea(c.getString(COL_CORNER));
 			host.setVirtualArea(c.getString(COL_VIRTUAL));
+			host.setClipAllow(Boolean.parseBoolean(c.getString(COL_ALLOWCLIP)));
 			hosts.add(host);
 		}
 

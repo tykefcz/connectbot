@@ -445,7 +445,7 @@ public class HostEditorFragment extends Fragment {
 			handleHostChange();
 		});
 
-		mAllowClipboard = view.findViewById(R.id.host_autoconnect);
+		mAllowClipboard = view.findViewById(R.id.host_allowclip);
 		mAllowClipboard.setChecked(mHost.getClipAllow());
 		mAllowClipboard.setOnCheckedChangeListener((buttonView, isChecked) -> {
 			mHost.setClipAllow(isChecked);

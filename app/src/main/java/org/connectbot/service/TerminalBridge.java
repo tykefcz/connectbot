@@ -139,6 +139,11 @@ public class TerminalBridge implements VDUDisplay {
 	public int getRows() {return rows;}
 	public int getVisibleCols() {return ulCols;}
 	public int getVisibleRows() {return ulRows;}
+	public boolean isClipEnabled() {if (this.host!=null) return host.getClipAllow(); return true;}
+	public boolean isBcAimPrefix() {if (this.host!=null) return host.getAimPrefixes(); return false;}
+	public String getSsccPrefix() {if (this.host!=null) return host.getBcSsccPrefix(); return "";}
+	public String getSsccF1() {if (this.host!=null) return host.getBcSsccF1(); return "";}
+	public String getBcPostfix() {if (this.host!=null) return host.getBarcodeSuffix(); return "";}
 	/**
 	 * Create a new terminal bridge suitable for unit testing.
 	 */

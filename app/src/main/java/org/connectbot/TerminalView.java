@@ -215,6 +215,7 @@ public class TerminalView extends FrameLayout implements FontSizeChangedListener
 
 		// Once terminalTextViewOverlay is active, allow it to handle key events instead.
 		terminalTextViewOverlay.setOnKeyListener(bridge.getKeyHandler());
+		terminalTextViewOverlay.setTextIsSelectable(bridge.isClipEnabled());
 
 		clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
 		prefs = PreferenceManager.getDefaultSharedPreferences(context);
@@ -306,7 +307,7 @@ public class TerminalView extends FrameLayout implements FontSizeChangedListener
 		// Old version of copying, only for pre-Honeycomb.
 		if (terminalTextViewOverlay == null) {
 			// when copying, highlight the area
-			if (bridge.isSelectingForCopy()) {
+			if (bridge.isSelectingForCopy() && bridge.isClipEnabled()) {
 				SelectionArea area = bridge.getSelectionArea();
 				int row = (int) Math.floor(event.getY() / bridge.charHeight);
 				int col = (int) Math.floor(event.getX() / bridge.charWidth);
@@ -344,6 +345,7 @@ public class TerminalView extends FrameLayout implements FontSizeChangedListener
 							/* If they didn't move their finger, maybe they meant to
 							 * select the rest of the text with the directional pad.
 							 */
+					if (!bridge.isClipEnabled()) return true;
 					if (area.getLeft() == area.getRight() &&
 							area.getTop() == area.getBottom()) {
 						return true;
@@ -521,7 +523,7 @@ public class TerminalView extends FrameLayout implements FontSizeChangedListener
 			}
 
 			// draw any highlighted area
-			if (terminalTextViewOverlay == null && bridge.isSelectingForCopy()) {
+			if (terminalTextViewOverlay == null && bridge.isClipEnabled() && bridge.isSelectingForCopy()) {
 				SelectionArea area = bridge.getSelectionArea();
 				canvas.save();
 				canvas.clipRect(
