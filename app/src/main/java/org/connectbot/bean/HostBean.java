@@ -59,10 +59,9 @@ public class HostBean extends AbstractBean {
 
 	private String password = null;
 	private int ulRows=0,ulCols=0,ulVirtCols=0,ulVirtRows=0;
-	private String barcodeSuffix="", barcodeConfig="";
-	private boolean autoConnect=false,clipAllow=true;
+	private String barcodeSuffix="", bcSsccF1="\\x1d", bcSsccPrefix="";
+	private boolean autoConnect=false, clipAllow=true, bcAimPrefixes=false;
 	public HostBean() {
-
 	}
 
 	@Override
@@ -211,10 +210,34 @@ public class HostBean extends AbstractBean {
 	public boolean getAutoconnect() { return autoConnect;}
 	public void setClipAllow(boolean value) {clipAllow = value;}
 	public boolean getClipAllow() { return clipAllow;}
-	public void setBarcodeConfig(String value) {barcodeConfig = value;}
-	public String getBarcodeConfig() { return barcodeConfig;}
+	public void setBarcodeConfig(String value) {
+		if (value!=null && !value.equals("")) {
+			String[] a = value.split(",");
+			for (String pair: a) {
+				String[] kv = value.split(":",2);
+				if (kv.length==2)
+					switch (kv[0]) {
+					case "AimPrefix": bcAimPrefixes = kv[1].equals("1"); break;
+					case "SsccPrefix": bcSsccPrefix = kv[1].replaceAll("\\x2c",",").replaceAll("\\x3a",":"); break;
+					case "SsccF1": bcSsccF1 = kv[1].replaceAll("\\x2c",",").replaceAll("\\x3a",":"); break;
+				}
+			}
+		}
+	}
+	public String getBarcodeConfig() {
+		String barcodeConfig =  "AimPrefix:" + (bcAimPrefixes?"1":"0")
+				+ ",SsccPrefix:" + bcSsccPrefix.replaceAll(",","\\x2c").replaceAll(":","\\x3a")
+				+ ",SsccF1:" + bcSsccF1.replaceAll(",","\\x2c").replaceAll(":","\\x3a");
+		return barcodeConfig;
+	}
 	public void setBarcodeSuffix(String value) {barcodeSuffix = value;}
 	public String getBarcodeSuffix() { return barcodeSuffix;}
+	public boolean getAimPrefixes() { return bcAimPrefixes;}
+	public void setAimPrefixes(boolean enabled) {bcAimPrefixes = true;}
+	public String getBcSsccF1() {return bcSsccF1;}
+	public void setBcSsccF1(String value) {bcSsccF1 = value;}
+	public String getBcSsccPrefix() {return bcSsccPrefix;}
+	public void setBcSsccPrefix(String value) {bcSsccPrefix = value;}
 	public void setEncoding(String encoding) {
 		this.encoding  = encoding;
 	}
@@ -275,7 +298,7 @@ public class HostBean extends AbstractBean {
 		values.put(HostDatabase.FIELD_HOST_PASSWORD, password);
 		values.put(HostDatabase.FIELD_HOST_AUTOCONNECT,Boolean.toString(autoConnect));
 		values.put(HostDatabase.FIELD_HOST_BARCODE_SUFFIX,barcodeSuffix);
-		values.put(HostDatabase.FIELD_HOST_BARCODE_CONFIG,barcodeConfig);
+		values.put(HostDatabase.FIELD_HOST_BARCODE_CONFIG,getBarcodeConfig());
 		values.put(HostDatabase.FIELD_HOST_CORNER,ulCols==0 && ulRows==0 ? "" : ("" + ulCols + "x" + ulRows));
 		values.put(HostDatabase.FIELD_HOST_VIRTUAL,ulVirtCols==0 && ulVirtRows==0 ? "" : ("" + ulVirtCols + "x" + ulVirtRows));
 		values.put(HostDatabase.FIELD_HOST_ALLOWCLIP,Boolean.toString(clipAllow));

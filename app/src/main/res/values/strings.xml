@@ -676,4 +676,7 @@
 	<string name="pref_conn_autoconnect">Auto connect on start</string>
 	<string name="only_in_provisioning_mode">Only in provisioning mode</string>
 	<string name="pref_conn_allowclip">Enable clipboard functions</string>
+	<string name="pref_conn_bc_prefixes">Barcode AIM prefixes ([C0,[x#)</string>
+	<string name="pref_conn_ean128_prefix">EAN128 Prefix</string>
+	<string name="pref_conn_f1replace">F1 Character Replace</string>
 </resources>

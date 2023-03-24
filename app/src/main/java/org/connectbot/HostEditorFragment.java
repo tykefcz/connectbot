@@ -129,11 +129,11 @@ public class HostEditorFragment extends Fragment {
 	private EditText mPostLoginAutomationField;
 	private HostTextFieldWatcher mFontSizeTextChangeListener;
 
-	private CheckableMenuItem mAutoConnect;
+	private CheckableMenuItem mAutoConnect,mBarcodeAimPrefix;
 	private CheckableMenuItem mAllowClipboard;
 	private View mPlainTextPasswordContainer;
 	private EditText mCornerCols,mCornerRows,mVirtualCols,mVirtualRows,mPlainTextPassword;
-	private EditText mBarcodeSuffix;
+	private EditText mBarcodeSuffix,mSsccPrefix,mSsccF1;
 	//private CheckableMenuItem[] mEnableBcs;
 	public static HostEditorFragment newInstance(
 			HostBean existingHost, ArrayList<String> pubkeyNames, ArrayList<String> pubkeyValues) {
@@ -470,6 +470,23 @@ public class HostEditorFragment extends Fragment {
 		mVirtualRows.setText(ulc[3]==0 ? "" : ("" + ulc[3]));
 		mVirtualRows.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_VIRTUAL + ":R"));
 
+		mBarcodeAimPrefix = view.findViewById(R.id.host_bc_prefixes);
+		mBarcodeAimPrefix.setChecked(mHost.getAimPrefixes());
+		mBarcodeAimPrefix.setOnCheckedChangeListener((buttonView, isChecked) -> {
+			mHost.setAimPrefixes(isChecked);
+			handleHostChange();
+		});
+
+		mSsccPrefix = view.findViewById(R.id.ssccprefix_field);
+		mSsccPrefix.setText(mHost.getBcSsccPrefix());
+		mSsccPrefix.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_BARCODE_CONFIG + ":SsccPrefix"));
+		setUriPartsContainerExpanded(mIsUriEditorExpanded);
+
+		mSsccF1 = view.findViewById(R.id.ssccf1_field);
+		mSsccF1.setText(mHost.getBcSsccF1());
+		mSsccF1.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_BARCODE_CONFIG + ":SsccF1"));
+		setUriPartsContainerExpanded(mIsUriEditorExpanded);
+
 		mBarcodeSuffix = view.findViewById(R.id.bcsuffix_field);
 		mBarcodeSuffix.setText(mHost.getBarcodeSuffix());
 		mBarcodeSuffix.addTextChangedListener(new HostTextFieldWatcher(HostDatabase.FIELD_HOST_BARCODE_SUFFIX));
@@ -746,10 +763,21 @@ public class HostEditorFragment extends Fragment {
 			} else if (mFieldType.startsWith(HostDatabase.FIELD_HOST_CORNER + ":")) {
 				int[] co = mHost.getUlSize();
 				if (mFieldType.endsWith("C"))
-					try { co[0] = Integer.parseInt(text); } catch (Exception e) {}
+					try {
+						co[0] = Integer.parseInt(text);
+					} catch (Exception e) {
+					}
 				else if (mFieldType.endsWith("R"))
-					try { co[1] = Integer.parseInt(text); } catch (Exception e) {}
+					try {
+						co[1] = Integer.parseInt(text);
+					} catch (Exception e) {
+					}
 				mHost.setCornerArea("" + co[0] + "x" + co[1]);
+			} else if (mFieldType.startsWith(HostDatabase.FIELD_HOST_BARCODE_CONFIG + ":")) {
+				if (mFieldType.endsWith(":SsccF1"))
+					mHost.setBcSsccF1(text);
+				else if (mFieldType.endsWith(":SsccPrefix"))
+					mHost.setBcSsccPrefix(text);
 			} else if (HostDatabase.FIELD_HOST_BARCODE_SUFFIX.equals(mFieldType)) {
 				mHost.setBarcodeSuffix(text);
 			} else {

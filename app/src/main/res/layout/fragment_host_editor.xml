@@ -536,6 +536,104 @@
 			</com.google.android.material.textfield.TextInputLayout>
 		</RelativeLayout>
 
+		<org.connectbot.views.CheckableMenuItem
+			android:id="@+id/host_bc_prefixes"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:title= "@string/pref_conn_bc_prefixes" />
+
+		<RelativeLayout
+			android:id="@+id/ssccprefix_item"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:focusable="true">
+
+			<ImageView
+				android:layout_width="24dp"
+				android:layout_height="24dp"
+				app:srcCompat="@drawable/ic_keyboard_tab"
+				android:contentDescription="@null"
+				style="@style/ListItemIcon"
+				/>
+
+			<TextView
+				android:id="@+id/ssccprefix_title"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="@string/pref_conn_ean128_prefix"
+				android:labelFor="@+id/ssccprefix_field"
+				style="@style/ListItemFirstLineText.WithIcon"
+				/>
+
+			<TextView
+				android:id="@+id/ssccprefix_summary"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="@string/pref_conn_ean128_prefix"
+				android:layout_below="@id/ssccprefix_title"
+				android:layout_alignParentBottom="false"
+				android:paddingBottom="2dp"
+				style="@style/ListItemSecondLineText.WithIcon"
+				/>
+
+			<EditText
+				android:id="@id/ssccprefix_field"
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginLeft="72dp"
+				android:layout_marginStart="72dp"
+				android:layout_below="@id/ssccprefix_summary"
+				android:inputType="text"
+				android:lines="1"
+				/>
+		</RelativeLayout>
+
+		<RelativeLayout
+			android:id="@+id/ssccf1_item"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:focusable="true">
+
+			<ImageView
+				android:layout_width="24dp"
+				android:layout_height="24dp"
+				app:srcCompat="@drawable/ic_keyboard_tab"
+				android:contentDescription="@null"
+				style="@style/ListItemIcon"
+				/>
+
+			<TextView
+				android:id="@+id/ssccf1_title"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="@string/pref_conn_f1replace"
+				android:labelFor="@+id/ssccf1_field"
+				style="@style/ListItemFirstLineText.WithIcon"
+				/>
+
+			<TextView
+				android:id="@+id/ssccf1_summary"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="@string/pref_conn_f1replace"
+				android:layout_below="@id/ssccf1_title"
+				android:layout_alignParentBottom="false"
+				android:paddingBottom="2dp"
+				style="@style/ListItemSecondLineText.WithIcon"
+				/>
+
+			<EditText
+				android:id="@id/ssccf1_field"
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginLeft="72dp"
+				android:layout_marginStart="72dp"
+				android:layout_below="@id/ssccf1_summary"
+				android:inputType="text"
+				android:lines="1"
+				/>
+		</RelativeLayout>
+
 		<RelativeLayout
 			android:id="@+id/bcsufix_item"
 			android:layout_width="match_parent"
