@@ -28,6 +28,7 @@ package de.mud.terminal;
 import android.app.ActivityManager;
 import android.os.Build;
 import android.text.AndroidCharacter;
+import android.util.Log;
 import cz.madeta.droidssh.BuildConfig;
 
 import java.util.Properties;
@@ -190,7 +191,7 @@ public void setScreenSize(int c, int r, boolean broadcast) {
 
     setVMS(false);
     setIBMCharset(false);
-    setTerminalID("vt320");
+    //setTerminalID("vt320");
     setBufferSize(100);
     //setBorder(2, false);
 
@@ -308,6 +309,8 @@ public void setScreenSize(int c, int r, boolean broadcast) {
     NUMPlus[0] = "+";
     NUMDot = new String[4];
     NUMDot[0] = ".";
+
+    setTerminalID("vt320");
   }
 
   public void setBackspace(int type) {
@@ -589,16 +592,30 @@ public void setScreenSize(int c, int r, boolean broadcast) {
       // more theoretically.
     }
     if (terminalID.equals("xterm")) {
-      FunctionKey[1] = "\u001b[OP";  FunctionKey[2] = "\u001b[OQ";
-      FunctionKey[3] = "\u001b[OR";  FunctionKey[4] = "\u001b[OS";
-      FunctionKey[5] = "\u001b[[15~";  FunctionKey[6] = "\u001b[[17~";
-      FunctionKey[7] = "\u001b[[18~";  FunctionKey[8] = "\u001b[[19~";
-      FunctionKey[9] = "\u001b[[20~";  FunctionKey[10] = "\u001b[[21~";
-      FunctionKey[11] = "\u001b[[22~"; FunctionKey[12] = "\u001b[[23~";
-      PrevScn[0] = PrevScn[1] = PrevScn[2] = PrevScn[3] = "\u001b[[5~";
-      NextScn[0] = NextScn[1] = NextScn[2] = NextScn[3] = "\u001b[[6~";
-      KeyUp[0] = "\u001b[OA"; KeyDown[0] = "\u001b[OB"; KeyRight[0]="\u001b[OC"; KeyLeft[0]="\u001b[OD";
+      if (FunctionKey != null && FunctionKey.length >= 13) {
+        FunctionKey[1]  = "\u001b[OP";   FunctionKey[2]  = "\u001b[OQ";
+        FunctionKey[3]  = "\u001b[OR";   FunctionKey[4]  = "\u001b[OS";
+        FunctionKey[5]  = "\u001b[[15~"; FunctionKey[6]  = "\u001b[[17~";
+        FunctionKey[7]  = "\u001b[[18~"; FunctionKey[8]  = "\u001b[[19~";
+        FunctionKey[9]  = "\u001b[[20~"; FunctionKey[10] = "\u001b[[21~";
+        FunctionKey[11] = "\u001b[[22~"; FunctionKey[12] = "\u001b[[23~";
+      }
+      if (PrevScn != null && PrevScn.length >= 4) {
+        PrevScn[0] = PrevScn[1] = PrevScn[2] = PrevScn[3] = "\u001b[[5~";
+      }
+      if (NextScn != null && NextScn.length >= 4) {
+        NextScn[0] = NextScn[1] = NextScn[2] = NextScn[3] = "\u001b[[6~";
+      }
+      if (KeyUp != null && KeyUp.length >= 1)
+        KeyUp[0] = "\u001b[OA";
+      if (KeyDown != null && KeyDown.length >= 1)
+        KeyDown[0] = "\u001b[OB";
+      if (KeyRight != null && KeyRight.length >= 1)
+        KeyRight[0] = "\u001b[OC";
+      if (KeyLeft != null && KeyLeft.length >= 1)
+        KeyLeft[0] = "\u001b[OD";
     }
+    try {Log.d("vt320","setTerminal(\"" + terminalID + "\") F1=" + (FunctionKey==null || FunctionKey.length < 2?"nil":FunctionKey[1]));} catch (Exception e) {Log.d("vt320","ex",e);}
   }
 
   public void setAnswerBack(String ab) {
@@ -1299,29 +1316,29 @@ public void setScreenSize(int c, int r, boolean broadcast) {
   }
 
   private void handle_osc(String osc) {
-	  if (osc.length() > 2 && osc.substring(0, 2).equals("4;")) {
-			// Define color palette
-			String[] colorData = osc.split(";");
+    if (osc.length() > 2 && osc.substring(0, 2).equals("4;")) {
+      // Define color palette
+      String[] colorData = osc.split(";");
 
-			try {
-				int colorIndex = Integer.parseInt(colorData[1]);
+      try {
+        int colorIndex = Integer.parseInt(colorData[1]);
 
-				if ("rgb:".equals(colorData[2].substring(0, 4))) {
-					String[] rgb = colorData[2].substring(4).split("/", -1);
+        if ("rgb:".equals(colorData[2].substring(0, 4))) {
+          String[] rgb = colorData[2].substring(4).split("/", -1);
 
-					int red = Integer.parseInt(rgb[0].substring(0, 2), 16) & 0xFF;
-					int green = Integer.parseInt(rgb[1].substring(0, 2), 16) & 0xFF;
-					int blue = Integer.parseInt(rgb[2].substring(0, 2), 16) & 0xFF;
-					display.setColor(colorIndex, red, green, blue);
-				}
-			} catch (Exception e) {
-				debugStr.append("OSC: invalid color sequence encountered: ")
-				  .append(osc);
-				debug(debugStr.toString());
-				debugStr.setLength(0);
-			}
-		} else
-			debug("OSC: " + osc);
+          int red = Integer.parseInt(rgb[0].substring(0, 2), 16) & 0xFF;
+          int green = Integer.parseInt(rgb[1].substring(0, 2), 16) & 0xFF;
+          int blue = Integer.parseInt(rgb[2].substring(0, 2), 16) & 0xFF;
+          display.setColor(colorIndex, red, green, blue);
+        }
+      } catch (Exception e) {
+        debugStr.append("OSC: invalid color sequence encountered: ")
+                .append(osc);
+        debug(debugStr.toString());
+        debugStr.setLength(0);
+      }
+    } else
+      debug("OSC: " + osc);
   }
 
   private final static char unimap[] = {

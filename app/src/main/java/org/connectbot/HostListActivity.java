@@ -29,9 +29,12 @@ import android.content.SharedPreferences.Editor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.DropBoxManager;
+import android.os.Environment;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.annotation.StyleRes;
 import androidx.annotation.VisibleForTesting;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -57,9 +60,13 @@ import org.connectbot.service.TerminalManager;
 import org.connectbot.transport.TransportFactory;
 import org.connectbot.util.HostDatabase;
 import org.connectbot.util.PreferenceConstants;
+
+import cz.madeta.HonUtils;
 import cz.madeta.droidssh.R;
 
 import java.util.List;
+
+import static cz.madeta.HonUtils.getSysProp;
 
 public class HostListActivity extends AppCompatListActivity implements OnHostStatusChangedListener {
 	public final static String TAG = "CB.HostListActivity";
@@ -157,6 +164,12 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
+		try {
+			if (intent!=null && intent.getAction()!=null && intent.getAction().equals("cz.madeta.droidssh.LOADCFG")) {
+				Log.d(TAG,"newIntent action=" + intent.getAction());
+				HonUtils.exportSettingsAndHosts(getApplicationContext(),"/data/data/cz.madeta.droidssh/expconf.xml");
+			}
+		} catch (Exception e) {Log.d(TAG,"newIntent Ex:",e);}
 		setIntent(intent);
 	}
 
@@ -209,6 +222,10 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 			Log.d(TAG,"Provisioning mode=" + cz.madeta.HonUtils.isProvisioningMode());
 		} else {
 			Log.d(TAG,"Manufacturer = " + Build.MANUFACTURER);
+			/*String x = getSysProp("ro.hsm.model.num");
+			Log.d(TAG,"ro.hsm.model.num = '" + (x==null?"nil":x) + "'");
+			x = getSysProp("sys.hsm.provisioning");
+			Log.d(TAG,"sys.hsm.provisioning = '" + (x==null?"nil":x) + "'"); */
 		}
 		this.makingShortcut = Intent.ACTION_CREATE_SHORTCUT.equals(getIntent().getAction())
 								|| Intent.ACTION_PICK.equals(getIntent().getAction());
@@ -298,6 +315,16 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 			@Override
 			public boolean onMenuItemClick(MenuItem menuItem) {
 				disconnectAll();
+				return false;
+			}
+		});
+		MenuItem exportSettings = menu.add("Export");
+		exportSettings.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+			@Override
+			public boolean onMenuItemClick(@NonNull MenuItem menuItem) {
+				String f = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) + "/droidssh.xml";
+				Log.d(TAG,"Export write to " + f);
+				HonUtils.exportSettingsAndHosts(getApplicationContext(), f);
 				return false;
 			}
 		});
