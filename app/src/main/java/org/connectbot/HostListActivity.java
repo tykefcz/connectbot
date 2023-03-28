@@ -17,6 +17,7 @@
 
 package org.connectbot;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.content.ComponentName;
 import android.content.Context;
@@ -26,6 +27,7 @@ import android.content.Intent.ShortcutIconResource;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -38,6 +40,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.StyleRes;
 import androidx.annotation.VisibleForTesting;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -64,13 +68,16 @@ import org.connectbot.util.PreferenceConstants;
 import cz.madeta.HonUtils;
 import cz.madeta.droidssh.R;
 
+import java.io.File;
 import java.util.List;
 
 import static cz.madeta.HonUtils.getSysProp;
+import static cz.madeta.HonUtils.isProvisioningMode;
 
-public class HostListActivity extends AppCompatListActivity implements OnHostStatusChangedListener {
+public class HostListActivity extends AppCompatListActivity implements OnHostStatusChangedListener,ActivityCompat.OnRequestPermissionsResultCallback {
 	public final static String TAG = "CB.HostListActivity";
 	public static final String DISCONNECT_ACTION = "org.connectbot.action.DISCONNECT";
+	public static final String IMPEXPSETTINGS = "importStamp";
 
 	public final static int REQUEST_EDIT = 1;
 
@@ -88,7 +95,8 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 
 	private MenuItem disconnectall;
 
-	private MenuItem help,settings,keys;
+	private MenuItem help,settings,keys,export,impome;
+	private FloatingActionButton addHostButton;
 	private SharedPreferences prefs = null;
 
 	protected boolean makingShortcut = false;
@@ -100,6 +108,7 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 	 * only brought to the foreground via the notification button to disconnect all hosts.
 	 */
 	private boolean closeOnDisconnectAll = true;
+	private String expimpFilename;
 
 	private ServiceConnection connection = new ServiceConnection() {
 		@Override
@@ -155,6 +164,8 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 				DISCONNECT_ACTION.equals(getIntent().getAction())) {
 			Log.d(TAG, "Got disconnect all request");
 			disconnectAll();
+		} else {
+
 		}
 
 		// Still close on disconnect if waiting for a disconnect.
@@ -167,7 +178,7 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 		try {
 			if (intent!=null && intent.getAction()!=null && intent.getAction().equals("cz.madeta.droidssh.LOADCFG")) {
 				Log.d(TAG,"newIntent action=" + intent.getAction());
-				HonUtils.exportSettingsAndHosts(getApplicationContext(),"/data/data/cz.madeta.droidssh/expconf.xml");
+				HonUtils.exportSettingsAndHosts(getApplicationContext(),expimpFilename);
 			}
 		} catch (Exception e) {Log.d(TAG,"newIntent Ex:",e);}
 		setIntent(intent);
@@ -218,15 +229,11 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 				editor.apply();
 			}
 		}
-		if (Build.MANUFACTURER.equals("Honeywell")) {
+		/*if (Build.MANUFACTURER.equals("Honeywell")) {
 			Log.d(TAG,"Provisioning mode=" + cz.madeta.HonUtils.isProvisioningMode());
 		} else {
 			Log.d(TAG,"Manufacturer = " + Build.MANUFACTURER);
-			/*String x = getSysProp("ro.hsm.model.num");
-			Log.d(TAG,"ro.hsm.model.num = '" + (x==null?"nil":x) + "'");
-			x = getSysProp("sys.hsm.provisioning");
-			Log.d(TAG,"sys.hsm.provisioning = '" + (x==null?"nil":x) + "'"); */
-		}
+		}*/
 		this.makingShortcut = Intent.ACTION_CREATE_SHORTCUT.equals(getIntent().getAction())
 								|| Intent.ACTION_PICK.equals(getIntent().getAction());
 
@@ -240,20 +247,46 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 		View addHostButtonContainer = findViewById(R.id.add_host_button_container);
 		addHostButtonContainer.setVisibility(makingShortcut ? View.GONE : View.VISIBLE);
 
-		FloatingActionButton addHostButton = findViewById(R.id.add_host_button);
+		addHostButton = findViewById(R.id.add_host_button);
 		addHostButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				Intent intent = EditHostActivity.createIntentForNewHost(HostListActivity.this);
-				startActivityForResult(intent, REQUEST_EDIT);
+				if (HonUtils.isProvisioningMode()) {
+					Intent intent = EditHostActivity.createIntentForNewHost(HostListActivity.this);
+					startActivityForResult(intent, REQUEST_EDIT);
+				} else
+					Toast.makeText(HostListActivity.this,R.string.only_in_provisioning_mode,Toast.LENGTH_LONG).show();
 			}
 
 			public void onNothingSelected(AdapterView<?> arg0) {}
 		});
-
+		expimpFilename = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/droidssh.xml";
+		long lastImpStamp = prefs.getLong(IMPEXPSETTINGS,0);
+		File expsetfile = new File(expimpFilename);
+		if (expsetfile != null && expsetfile.canRead() && expsetfile.isFile() && expsetfile.lastModified() > lastImpStamp) {
+			Log.d(TAG,"Importing settings from file " + lastImpStamp + " < " + expsetfile.lastModified() + " '" + expimpFilename + "'");
+			lastImpStamp = expsetfile.lastModified() + 1;
+			prefs.edit().putLong(IMPEXPSETTINGS,lastImpStamp).apply();
+			try {
+				HonUtils.importSettingsAndHosts(this, expimpFilename);
+			} catch (Exception e) {}
+		}
+		else Log.d(TAG,"NO importing settings from file " + lastImpStamp + " >= " + expsetfile.lastModified() + " '" + expimpFilename + "'");
 		this.inflater = LayoutInflater.from(this);
 	}
 
+	@Override
+	public void onRequestPermissionsResult(int r, String[] perm, int[] ok) {
+		super.onRequestPermissionsResult(r,perm,ok);
+		try {
+			if (perm != null && perm.length > 0)
+				for (int i = 0; i < perm.length && i < ok.length; i++)
+					if (perm[i].equals(Manifest.permission.WRITE_EXTERNAL_STORAGE) && ok[i] == PackageManager.PERMISSION_GRANTED)
+						export.setEnabled(isProvisioningMode());
+		} catch (Exception e) {
+			Log.d(TAG,"ReqPermCB ex",e);
+		}
+	}
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		super.onPrepareOptionsMenu(menu);
@@ -268,6 +301,14 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 		keys.setEnabled(provismode);
 		settings.setEnabled(provismode);
 		help.setEnabled(provismode);
+		if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+			export.setEnabled(provismode);
+			impome.setEnabled(provismode);
+		} else {
+			ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE},0);
+			export.setEnabled(false);
+		}
+		addHostButton.setEnabled(provismode);
 		return true;
 	}
 
@@ -318,13 +359,22 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 				return false;
 			}
 		});
-		MenuItem exportSettings = menu.add("Export");
-		exportSettings.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+		export = menu.add("Export");
+		export.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			@Override
 			public boolean onMenuItemClick(@NonNull MenuItem menuItem) {
-				String f = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) + "/droidssh.xml";
-				Log.d(TAG,"Export write to " + f);
-				HonUtils.exportSettingsAndHosts(getApplicationContext(), f);
+				Log.d(TAG,"Export write to " + expimpFilename);
+				HonUtils.exportSettingsAndHosts(getApplicationContext(), expimpFilename);
+				return false;
+			}
+		});
+
+		impome = menu.add("Import");
+		impome.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+			@Override
+			public boolean onMenuItemClick(@NonNull MenuItem menuItem) {
+				Log.d(TAG,"Import from " + expimpFilename);
+				HonUtils.importSettingsAndHosts(getApplicationContext(), expimpFilename);
 				return false;
 			}
 		});

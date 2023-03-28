@@ -356,6 +356,11 @@ public class TerminalKeyListener implements OnKeyListener, OnSharedPreferenceCha
 				mDeadKey = 0;
 			}
 
+			if (keyCode >= KeyEvent.KEYCODE_F1 && keyCode <= KeyEvent.KEYCODE_F12) {
+				((vt320) buffer).keyPressed(vt320.KEY_F1 + keyCode - KeyEvent.KEYCODE_F1,' ',0);
+				return true;
+			}
+
 			// If we have a defined non-control character
 			if (uchar >= 0x20) {
 				if ((derivedMetaState & HC_META_CTRL_ON) != 0)

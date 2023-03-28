@@ -205,6 +205,20 @@ public class PubkeyBean extends AbstractBean {
 
 		return values;
 	}
+	public static PubkeyBean fromContentValues(ContentValues values) {
+		PubkeyBean pubkey = new PubkeyBean();
+
+		pubkey.setNickname(values.getAsString(PubkeyDatabase.FIELD_PUBKEY_NICKNAME));
+		pubkey.setType(values.getAsString(PubkeyDatabase.FIELD_PUBKEY_TYPE));
+		pubkey.setPrivateKey(values.getAsByteArray(PubkeyDatabase.FIELD_PUBKEY_PRIVATE));
+		pubkey.setPublicKey(values.getAsByteArray(PubkeyDatabase.FIELD_PUBKEY_PUBLIC));
+		pubkey.setEncrypted(Boolean.valueOf(values.getAsString(PubkeyDatabase.FIELD_PUBKEY_ENCRYPTED)));
+		pubkey.setStartup(Boolean.valueOf(values.getAsString(PubkeyDatabase.FIELD_PUBKEY_STARTUP)));
+		pubkey.setConfirmUse(Boolean.valueOf(values.getAsString(PubkeyDatabase.FIELD_PUBKEY_CONFIRMUSE)));
+		pubkey.setLifetime(Integer.parseInt(values.getAsString(PubkeyDatabase.FIELD_PUBKEY_LIFETIME)));
+
+		return pubkey;
+	}
 
 	public boolean changePassword(String oldPassword, String newPassword) throws Exception {
 		PrivateKey priv;

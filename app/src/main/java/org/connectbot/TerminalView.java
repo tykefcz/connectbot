@@ -400,11 +400,7 @@ public class TerminalView extends FrameLayout implements FontSizeChangedListener
 					// Use the bridge text size in pixels to have exactly the same text size.
 					try {Log.d(tag,String.format("onFontSizeChanged bridge=%.1f ul=%dx%d oldtextsize=%.2f",bridge.getTextSizePx(), ulCols, ulRows,terminalTextViewOverlay.getTextSize()));}
 					catch (Exception e) {Log.e(tag,e.toString());}
-					if (ulCols > 0 && ulRows > 0 ) {
-						// tempDst.set(0.0f, 0.0f, ulWidth, ulHeight);
-						terminalTextViewOverlay.setTextSize(TypedValue.COMPLEX_UNIT_PX, bridge.getTextSizePx() * 80.0f / ulCols);
-					} else
-						terminalTextViewOverlay.setTextSize(TypedValue.COMPLEX_UNIT_PX, bridge.getTextSizePx());
+					terminalTextViewOverlay.setTextSize(TypedValue.COMPLEX_UNIT_PX, bridge.getTextSizePx());
 					try {Log.d(tag,String.format("onFontSizeChanged new textsize = %.2f",terminalTextViewOverlay.getTextSize()));}
 					catch (Exception e) {Log.e(tag,e.toString());}
 

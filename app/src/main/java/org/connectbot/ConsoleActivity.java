@@ -937,9 +937,8 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 				@Override
 				public boolean onMenuItemClick(MenuItem item) {
 					final TerminalView terminalView = adapter.getCurrentTerminalView();
-					if (terminalView.bridge.isCornerMode()) {
-						terminalView.forceSize(80, 25);
-					}
+					if (terminalView.bridge.isCornerMode())
+						terminalView.forceSize(terminalView.bridge.getCols(), terminalView.bridge.getRows());
 					return true;
 				}
 			});
@@ -1014,7 +1013,7 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 				@SuppressLint("InflateParams")  // Dialogs do not have a parent view.
 				final View resizeView = inflater.inflate(R.layout.dia_resize, null, false);
 				if (terminalView.bridge.isCornerMode()) {
-					terminalView.forceSize(80, 25);
+					terminalView.forceSize(terminalView.bridge.getCols(), terminalView.bridge.getRows());
 				} else {
 					new androidx.appcompat.app.AlertDialog.Builder(
 							ConsoleActivity.this, R.style.AlertDialogTheme)

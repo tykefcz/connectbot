@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.connectbot.annotation.KeepForTesting;
+import org.connectbot.bean.HostBean;
 import org.connectbot.bean.PubkeyBean;
 
 import android.content.ContentValues;

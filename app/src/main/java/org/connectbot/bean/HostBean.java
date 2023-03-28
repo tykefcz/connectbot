@@ -26,6 +26,7 @@ import org.connectbot.util.HostDatabase;
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.net.Uri;
+import android.util.Log;
 
 /**
  * @author Kenny Root
@@ -210,34 +211,43 @@ public class HostBean extends AbstractBean {
 	public boolean getAutoconnect() { return autoConnect;}
 	public void setClipAllow(boolean value) {clipAllow = value;}
 	public boolean getClipAllow() { return clipAllow;}
+	private String val2BcConfig(String s) {
+		if (s==null) return "";
+		return s.replaceAll(",","\\x2c").replaceAll(":","\\x3a");
+	}
+	private String bcCfg2val(String s) {
+		if (s==null) return "";
+		return s.replaceAll("\\x2c",",").replaceAll("\\x3a",":");
+	}
 	public void setBarcodeConfig(String value) {
 		if (value!=null && !value.equals("")) {
 			String[] a = value.split(",");
 			for (String pair: a) {
-				String[] kv = value.split(":",2);
+				String[] kv = pair.split(":",2);
 				if (kv.length==2)
 					switch (kv[0]) {
 					case "AimPrefix": bcAimPrefixes = kv[1].equals("1"); break;
-					case "SsccPrefix": bcSsccPrefix = kv[1].replaceAll("\\x2c",",").replaceAll("\\x3a",":"); break;
-					case "SsccF1": bcSsccF1 = kv[1].replaceAll("\\x2c",",").replaceAll("\\x3a",":"); break;
+					case "SsccPrefix": bcSsccPrefix = bcCfg2val(kv[1]); break;
+					case "SsccF1": bcSsccF1 = bcCfg2val(kv[1]); break;
 				}
 			}
+			getBarcodeConfig();
 		}
 	}
 	public String getBarcodeConfig() {
 		String barcodeConfig =  "AimPrefix:" + (bcAimPrefixes?"1":"0")
-				+ ",SsccPrefix:" + bcSsccPrefix.replaceAll(",","\\x2c").replaceAll(":","\\x3a")
-				+ ",SsccF1:" + bcSsccF1.replaceAll(",","\\x2c").replaceAll(":","\\x3a");
+				+ ",SsccPrefix:" + val2BcConfig(bcSsccPrefix)
+				+ ",SsccF1:" + val2BcConfig(bcSsccF1);
 		return barcodeConfig;
 	}
 	public void setBarcodeSuffix(String value) {barcodeSuffix = value;}
 	public String getBarcodeSuffix() { return barcodeSuffix;}
 	public boolean getAimPrefixes() { return bcAimPrefixes;}
-	public void setAimPrefixes(boolean enabled) {bcAimPrefixes = true;}
+	public void setAimPrefixes(boolean enabled) {setBarcodeConfig("AimPrefix:" + (enabled?"1":"0"));}
 	public String getBcSsccF1() {return bcSsccF1;}
-	public void setBcSsccF1(String value) {bcSsccF1 = value;}
+	public void setBcSsccF1(String value) {setBarcodeConfig("SsccF1:" + val2BcConfig(value));}
 	public String getBcSsccPrefix() {return bcSsccPrefix;}
-	public void setBcSsccPrefix(String value) {bcSsccPrefix = value;}
+	public void setBcSsccPrefix(String value) {setBarcodeConfig("SsccPrefix:" + val2BcConfig(value));}
 	public void setEncoding(String encoding) {
 		this.encoding  = encoding;
 	}

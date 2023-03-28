@@ -458,6 +458,16 @@ public class TerminalBridge implements VDUDisplay {
 			relayThread.setDaemon(true);
 			relayThread.setName("Relay");
 			relayThread.start();
+			Log.d(TAG,"onConnected - call invalidate/fullRedraw");
+			try {
+				fullRedraw = true;
+				if (parent != null) {
+					if (isCornerMode())
+						parent.forceSize(columns,rows);
+					this.parent.invalidate();
+				}
+			} catch (Exception e) {
+			}
 		}
 
 		// force font-size to make sure we resizePTY as needed

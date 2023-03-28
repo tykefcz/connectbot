@@ -590,7 +590,7 @@ public void setScreenSize(int c, int r, boolean broadcast) {
       PrevScn[0] = PrevScn[1] = PrevScn[2] = PrevScn[3] = "\u001b[I";
       NextScn[0] = NextScn[1] = NextScn[2] = NextScn[3] = "\u001b[G";
       // more theoretically.
-    }
+    } /*
     if (terminalID.equals("xterm")) {
       if (FunctionKey != null && FunctionKey.length >= 13) {
         FunctionKey[1]  = "\u001b[OP";   FunctionKey[2]  = "\u001b[OQ";
@@ -614,8 +614,8 @@ public void setScreenSize(int c, int r, boolean broadcast) {
         KeyRight[0] = "\u001b[OC";
       if (KeyLeft != null && KeyLeft.length >= 1)
         KeyLeft[0] = "\u001b[OD";
-    }
-    try {Log.d("vt320","setTerminal(\"" + terminalID + "\") F1=" + (FunctionKey==null || FunctionKey.length < 2?"nil":FunctionKey[1]));} catch (Exception e) {Log.d("vt320","ex",e);}
+    } */
+    try {Log.d("vt320","setTerminal(\"" + terminalID + "\") F1=" + (FunctionKey==null || FunctionKey.length < 2?"nil":FunctionKey[1].substring(1)));} catch (Exception e) {Log.d("vt320","ex",e);}
   }
 
   public void setAnswerBack(String ab) {
