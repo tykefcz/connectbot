@@ -2909,7 +2909,8 @@ public void setScreenSize(int c, int r, boolean broadcast) {
                   debug("ESC[6n");
                 break;
               case 8:
-                // Madeta pc info
+              case 9:
+                // Madeta pc info ESC[8n
                 // ;PuTTy Release M0.70.65;Linux version 5.14.0-1048-oem;sysuser gabriel;ip 10.60.14.7;mem 16109756 kB;cpu 11th Gen Intel(R) Core(TM) i7-11700 @ 2.50GHz;
                 /* ActivityManager.MemoryInfo memoryInfo = null;
                 try {memoryInfo = new ActivityManager.MemoryInfo();

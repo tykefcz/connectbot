@@ -29,6 +29,10 @@ import android.os.Parcelable;
 import com.google.android.material.textfield.TextInputLayout;
 
 import android.util.Log;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.Spinner;
 import androidx.fragment.app.Fragment;
 import androidx.appcompat.widget.PopupMenu;
 import android.text.Editable;
@@ -88,6 +92,7 @@ public class HostEditorFragment extends Fragment {
 	// values are the same across languages, so the values are the ones saved to the database.
 	private TypedArray mColorNames;
 	private TypedArray mColorValues;
+	private TypedArray mEmulations;
 
 	// Likewise, but for DEL key.
 	private TypedArray mDelKeyNames;
@@ -134,6 +139,7 @@ public class HostEditorFragment extends Fragment {
 	private View mPlainTextPasswordContainer;
 	private EditText mCornerCols,mCornerRows,mVirtualCols,mVirtualRows,mPlainTextPassword;
 	private EditText mBarcodeSuffix,mSsccPrefix,mSsccF1;
+	private Spinner mEmuSpinner;
 	//private CheckableMenuItem[] mEnableBcs;
 	public static HostEditorFragment newInstance(
 			HostBean existingHost, ArrayList<String> pubkeyNames, ArrayList<String> pubkeyValues) {
@@ -291,6 +297,27 @@ public class HostEditorFragment extends Fragment {
 				break;
 			}
 		}
+
+		mEmuSpinner = view.findViewById(R.id.hostemulation);
+		String hemu = mHost.getEmulation();
+		try {
+			for (int i = 0; hemu != null && !hemu.equals("") && i < mEmuSpinner.getAdapter().getCount(); i++) {
+				if (hemu.equals(mEmulations.getString(i))) {
+					mEmuSpinner.setSelection(i);
+					break;
+				}
+			}
+		} catch (Exception e) {Log.e("HostEditor","ExSet",e);}
+		mEmuSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+			@Override
+			public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+				try {mHost.setEmulation((String) mEmuSpinner.getAdapter().getItem(i));} catch (Exception e) { Log.e("HostEditor","ExSele",e);}
+			}
+			@Override
+			public void onNothingSelected(AdapterView<?> adapterView) {
+				mHost.setEmulation(null);
+			}
+		});
 
 		mFontSizeText = view.findViewById(R.id.font_size_text);
 		mFontSizeText.setText(Integer.toString(mHost.getFontSize()));
@@ -595,6 +622,7 @@ public class HostEditorFragment extends Fragment {
 		mColorValues = getResources().obtainTypedArray(R.array.list_color_values);
 		mDelKeyNames = getResources().obtainTypedArray(R.array.list_delkey);
 		mDelKeyValues = getResources().obtainTypedArray(R.array.list_delkey_values);
+		mEmulations = getResources().obtainTypedArray(R.array.list_emulation_modes);
 	}
 
 	@Override

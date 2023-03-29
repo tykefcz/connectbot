@@ -21,6 +21,7 @@ import java.util.concurrent.Semaphore;
 
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 /**
  * Helps provide a relay for prompts and responses between a possible user
@@ -31,7 +32,7 @@ import android.os.Message;
 public class PromptHelper {
 	private final Object tag;
 
-	private Handler handler = null;
+	Handler handler = null;
 
 	private Semaphore promptToken;
 	private Semaphore promptResponse;
@@ -108,8 +109,8 @@ public class PromptHelper {
 			response = popResponse();
 		} finally {
 			promptToken.release();
+			promptRequested = null;
 		}
-
 		return response;
 	}
 
@@ -154,6 +155,7 @@ public class PromptHelper {
 		} else {
 			// No threads have acquired the token
 			promptToken.release();
+			promptRequested = null;
 		}
 	}
 }

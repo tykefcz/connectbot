@@ -108,37 +108,8 @@ import de.mud.terminal.vt320;
 import static cz.madeta.HonUtils.getSysProp;
 import static de.mud.terminal.vt320.unEscape;
 
-public class ConsoleActivity extends AppCompatActivity implements BridgeDisconnectedListener, BarcodeReader.BarcodeListener {
+public class ConsoleActivity extends AppCompatActivity implements BridgeDisconnectedListener {
 	public final static String TAG = "CB.ConsoleActivity";
-	// Honeywell Section
-	private static BarcodeReader _bcrd  = null;
-	private static AidcManager _aidcManager = null;
-	static BarcodeReader getBarcodeReader() {
-		if (_bcrd == null && _aidcManager!=null)
-			try {
-				_bcrd = _aidcManager.createBarcodeReader();
-				Log.d(TAG, "Honeywell Aidc.BarcodeReader onCreated OK");
-				if (_bcrd != null) {
-					// apply settings
-					try {
-						_bcrd.setProperty(BarcodeReader.PROPERTY_CODE_39_ENABLED, false);
-					} catch (UnsupportedPropertyException pe) {	}
-					try {
-						_bcrd.setProperty(BarcodeReader.PROPERTY_DATAMATRIX_ENABLED, true);
-					} catch (UnsupportedPropertyException pe) {	}
-					// set the trigger mode to automatic control
-					try {
-						_bcrd.setProperty(BarcodeReader.PROPERTY_TRIGGER_CONTROL_MODE,
-								BarcodeReader.TRIGGER_CONTROL_MODE_AUTO_CONTROL);
-					} catch (UnsupportedPropertyException pe) {	}
-				} else
-					Log.d(TAG, "barcode reader is null onCreate");
-			} catch (com.honeywell.aidc.InvalidScannerNameException e) {
-				Log.w(TAG, "Honeywell Aidc.BarcodeReader ex:" + e);
-			}
-		return _bcrd;
-	}
-	// End Honeywell section
 
 	protected static final int REQUEST_EDIT = 1;
 
@@ -252,6 +223,7 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 		@Override
 		public void handleMessage(Message msg) {
 			// someone below us requested to display a prompt
+			Log.d(TAG,"promptHandler handleMessage -> updatePromptVisible");
 			updatePromptVisible();
 		}
 	};
@@ -613,18 +585,6 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 			}
 		});
 
-		if (_aidcManager == null) {
-			AidcManager.create(this, new AidcManager.CreatedCallback() {
-				@Override
-				public void onCreated(AidcManager aidc) {
-					_aidcManager = aidc;
-					synchronized (_aidcManager) {
-						getBarcodeReader();
-						bcrdClaim();
-					}
-				}
-			});
-		}
 		booleanPromptGroup = findViewById(R.id.console_boolean_group);
 		booleanPrompt = findViewById(R.id.console_prompt);
 
@@ -1116,30 +1076,6 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 		if (forcedOrientation && bound != null) {
 			bound.setResizeAllowed(false);
 		}
-		if (_aidcManager != null) synchronized (_aidcManager) {
-			BarcodeReader bcrd = getBarcodeReader();
-			if (bcrd != null)
-				try {
-//					bcrd.removeBarcodeListener(this);
-					bcrd.release();
-				} catch(Exception e) {
-					Log.d(TAG,"bcrd ex:" + e);
-				}
-		}
-	}
-	protected void bcrdClaim() {
-		BarcodeReader bcrd = getBarcodeReader();
-		if (bcrd != null) {
-			_bcrd.addBarcodeListener(this);
-			Log.d(TAG, "barcode reader set onCreate");
-			try {
-				bcrd.claim();
-				Log.d(TAG,"bcrd claimed");
-			} catch(Exception e) {
-				Log.d(TAG,"bcrd ex:",e);
-			}
-		} else
-			Log.d(TAG,"barcode reader is null");
 	}
 
 	@Override
@@ -1173,9 +1109,6 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 			// Because the package isn't allowlisted, calling startLockTask() here
 			// would put the activity into screen pinning mode.
 			Log.d(TAG,"LockTask not PERMITTED :-(((");
-		}
-		if (_aidcManager != null) synchronized (_aidcManager) {
-			bcrdClaim();
 		}
 	}
 
@@ -1232,11 +1165,6 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 	@Override
 	public void onStop() {
 		super.onStop();
-		if (_aidcManager != null) synchronized (_aidcManager) {
-			BarcodeReader bcrd = getBarcodeReader();
-			if (bcrd != null)
-				bcrd.release();
-		}
 		unbindService(connection);
 	}
 
@@ -1264,6 +1192,7 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 		if (view == null || bound == null) {
 			return;
 		}
+		Log.d(TAG,"Changed defaultBridge to " + view.getTransitionName());
 		bound.defaultBridge = view.bridge;
 	}
 
@@ -1307,7 +1236,6 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 			booleanPromptGroup.setVisibility(View.VISIBLE);
 			booleanPrompt.setText(prompt.promptHint);
 			booleanYes.requestFocus();
-
 		} else {
 			hideAllPrompts();
 			view.requestFocus();
@@ -1437,35 +1365,22 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 				try {
 					w = getSysProp("ro.hsm.extserial.num");
 					if (w!= null) {
-						Log.d(TAG,"hsm.extserial=" + w);
+						//Log.d(TAG,"hsm.extserial=" + w);
 						ansback = w;
 					}
 				} catch (Exception e) {}
-				/*
-					if (w == null) {
-						DeviceManager dm = null;
-						try {
-							dm = DeviceManager.getInstance(container.getContext());
-						} catch (Exception e) {
-						}
-						if (dm != null && dm.isReady()) try {
-							w = dm.getSerialNumber();
-							Log.d(TAG, "Honeywell SN:" + w);
-							ansback = w;
-						} catch (Exception e) {
-						}
-					}
-				*/
 				try {
 					w = getSysProp("ro.build.id") + "/" + getSysProp("ro.build.version.incremental");
 					if (w!=null) {
 						ansback = ansback + "/" + w;
-						Log.d(TAG, "honeywell_build=" + w);
+						//Log.d(TAG, "honeywell_build=" + w);
 					}
 				} catch (Exception e) {}
-				if (ansback.equals("")) ansback="droidssh";
-				String termtype = prefs.getString(PreferenceConstants.EMULATION,"xterm");
-				bridge.setAnswerBack(ansback,"xterm");
+				if (ansback==null || ansback.equals("")) ansback="droidssh";
+				String termtype = bridge.host.getEmulation();
+				if (termtype==null || termtype.equals(""))
+					termtype = prefs.getString(PreferenceConstants.EMULATION,"xterm");
+				bridge.setAnswerBack(ansback,termtype);
 			}
 
 			// set the terminal name overlay text
@@ -1588,46 +1503,5 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		if (_aidcManager != null) synchronized (_aidcManager) {
-			BarcodeReader bcrd = getBarcodeReader();
-			if (bcrd != null)
-				try {
-					bcrd.release();
-				} catch (Exception e) {}
-		}
-	}
-	@Override
-	public void onBarcodeEvent(com.honeywell.aidc.BarcodeReadEvent barcodeReadEvent) {
-		if (barcodeReadEvent == null || barcodeReadEvent.getBarcodeData() == null || barcodeReadEvent.getBarcodeData().equals(""))
-			return;
-		Log.d(TAG,"onBarcode: " + (barcodeReadEvent==null?"nil":barcodeReadEvent.getBarcodeData())
-		 + ":a=" + barcodeReadEvent.getAimId() + ":i=" + barcodeReadEvent.getCodeId());
-		TerminalView terminal = adapter.getCurrentTerminalView();
-		if (terminal == null) return;
-		TerminalBridge bridge = terminal.bridge;
-		if (bridge==null || bridge.isDisconnected() || !bridge.isSessionOpen()) return;
-		String prefix = barcodeReadEvent.getAimId(), suffix = terminal.bridge.getBcPostfix();
-		if (!terminal.bridge.isBcAimPrefix()) prefix = "";
-		if (barcodeReadEvent.getCodeId().equals("I")) { // EAN128
-			String x = terminal.bridge.getSsccPrefix();
-			if (x!=null && !x.equals("")) prefix = x;
-			x = terminal.bridge.getSsccF1();
-			if (x==null) x = ""; else x=unEscape(x);
-			bridge.injectString(unEscape(prefix) + barcodeReadEvent.getBarcodeData().replaceAll("\u001d",x) + unEscape(suffix));
-		} else {
-			bridge.injectString(unEscape(prefix) + barcodeReadEvent.getBarcodeData() + unEscape(suffix));
-		}
-	}
-
-	@Override
-	public void onFailureEvent(BarcodeFailureEvent barcodeFailureEvent) {
-		Log.d(TAG,"onFailureEvent: " + (barcodeFailureEvent==null?"nil":barcodeFailureEvent.toString()));
-		try {
-			if (getBarcodeReader()!=null) getBarcodeReader().softwareTrigger(false);
-		} catch (ScannerNotClaimedException e) {
-			e.printStackTrace();
-		} catch (ScannerUnavailableException e) {
-			e.printStackTrace();
-		}
 	}
 }

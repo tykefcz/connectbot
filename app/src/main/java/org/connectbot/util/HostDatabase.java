@@ -80,6 +80,7 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 	public final static String FIELD_HOST_CORNER = "cornermode";
 	public final static String FIELD_HOST_VIRTUAL = "virtcolrow";
 	public final static String FIELD_HOST_ALLOWCLIP = "allowclip";
+	public final static String FIELD_HOST_EMULATION = "emulation";
 
 	public final static String TABLE_KNOWNHOSTS = "knownhosts";
 	public final static String FIELD_KNOWNHOSTS_HOSTID = "hostid";
@@ -155,7 +156,8 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 			+ ", " + FIELD_HOST_BARCODE_SUFFIX + " TEXT DEFAULT ''"
 			+ ", " + FIELD_HOST_CORNER + " TEXT DEFAULT ''"
 			+ ", " + FIELD_HOST_VIRTUAL + " TEXT DEFAULT ''"
-			+ ", " + FIELD_HOST_ALLOWCLIP + " TEXT DEFAULT '" + true + "'";
+			+ ", " + FIELD_HOST_ALLOWCLIP + " TEXT DEFAULT '" + true + "'"
+			+ ", " + FIELD_HOST_EMULATION + " TEXT DEFAULT ''";
 
 	public static final String CREATE_TABLE_HOSTS = "CREATE TABLE " + TABLE_HOSTS
 			+ " (" + TABLE_HOSTS_COLUMNS + ")";
@@ -417,6 +419,7 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 					+ ", ADD COLUMN " + FIELD_HOST_CORNER + " TEXT DEFAULT ''"
 					+ ", ADD COLUMN " + FIELD_HOST_VIRTUAL + " TEXT DEFAULT ''"
 					+ ", ADD COLUMN " + FIELD_HOST_ALLOWCLIP + " TEXT DEFAULT '" + true + "'"
+					+ ", ADD COLUMN " + FIELD_HOST_EMULATION + " TEXT DEFAULT ''"
 			);
 		}
 
@@ -448,21 +451,27 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 	 */
 	@Override
 	public HostBean saveHost(HostBean host) {
+		boolean success = false;
+
+		ContentValues values = host.getValues();
 		long id = host.getId();
 
 		mDb.beginTransaction();
 		try {
-			if (id == -1) {
+			if (id > 0) {
+				values.remove("_id");
+				if (mDb.update(TABLE_HOSTS, values, "_id = ?", new String[] {String.valueOf(id)}) > 0)
+					success = true;
+			}
+			if (!success) {
 				id = mDb.insert(TABLE_HOSTS, null, host.getValues());
-			} else {
-				mDb.update(TABLE_HOSTS, host.getValues(), "_id = ?", new String[] {String.valueOf(id)});
+				if (id != -1)
+					host.setId(id);
 			}
 			mDb.setTransactionSuccessful();
 		} finally {
 			mDb.endTransaction();
 		}
-
-		host.setId(id);
 
 		return host;
 	}
@@ -537,6 +546,7 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 			,COL_CORNER = c.getColumnIndexOrThrow(FIELD_HOST_CORNER)
 			,COL_VIRTUAL = c.getColumnIndexOrThrow(FIELD_HOST_VIRTUAL)
 			,COL_ALLOWCLIP = c.getColumnIndexOrThrow(FIELD_HOST_ALLOWCLIP)
+			,COL_EMULATION = c.getColumnIndexOrThrow(FIELD_HOST_EMULATION)
 			;
 
 		while (c.moveToNext()) {
@@ -569,6 +579,7 @@ public class HostDatabase extends RobustSQLiteOpenHelper implements HostStorage,
 			host.setCornerArea(c.getString(COL_CORNER));
 			host.setVirtualArea(c.getString(COL_VIRTUAL));
 			host.setClipAllow(Boolean.parseBoolean(c.getString(COL_ALLOWCLIP)));
+			host.setEmulation(c.getString(COL_EMULATION));
 			hosts.add(host);
 		}
 

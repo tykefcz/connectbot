@@ -30,6 +30,9 @@ import android.util.Base64;
 import android.util.Log;
 import android.util.Xml;
 
+// ToDo G Přesměrovávání Barcode z TermnalPager -> aktual page
+// ToDo G Host bez jména - s promptem (včetně barcode)
+
 public class HonUtils {
 	private static final String tag = "HonUtils";
 	// sys.hsm.provisioning]: [true
@@ -193,8 +196,9 @@ public class HonUtils {
 					typ=xpp.getAttributeValue(null,"type");
 					if (typ==null) typ = "";
 					pa = ""; for(int i = 2 ; i <= xpp.getDepth(); i++) pa = pa + "/" + inTag[i];
-					if (pa.equals("/hosts/host") || pa.equals("/pubkeys/key"))
+					if (pa.equals("/hosts/host") || pa.equals("/pubkeys/key")) {
 						ctv = new ContentValues();
+					}
 				} else if(eventType == XmlPullParser.END_TAG) {
 					inTag[xpp.getDepth()] = "";
 					typ = "";
@@ -203,13 +207,15 @@ public class HonUtils {
 						try {long id = Long.parseLong(ctv.getAsString("id")); h.setId(id);} catch (Exception e) {h.setId(++maxhid);};
 						if (maxhid < h.getId()) maxhid=h.getId();
 						hdb.saveHost(h);
+						Log.d(tag,"Import saveHost " + h.getId() + " : " + h);
 					} else if (pa.equals("/pubkeys/key") && ctv!=null && ctv.size() > 2) {
 						PubkeyBean pb = PubkeyBean.fromContentValues(ctv);
 						try {long id = Long.parseLong(ctv.getAsString("id")); pb.setId(id);} catch (Exception e) {};
 						pkdb.savePubkey(pb);
+						Log.d(tag,"Import savePubkey " + pb.getId() + " : " + pb);
 					}
-					pa = ""; for(int i = 2 ; i < xpp.getDepth(); i++) pa = pa + "/" + inTag[i];
 					if (xpp.getDepth() == 3) ctv = null;
+					pa = ""; for(int i = 2 ; i < xpp.getDepth(); i++) pa = pa + "/" + inTag[i];
 				} else if(eventType == XmlPullParser.TEXT) {
 					String v = xpp.getText();
 					if (v==null || "nil".equals(v)) v="";
@@ -234,7 +240,7 @@ public class HonUtils {
 			shpe.apply();
 			fileos.close();
 		} catch(Exception e) {
-			Log.e(tag,"Exception occured export ",e);
+			Log.e(tag,"Exception occured import ",e);
 		}
 	}
 }

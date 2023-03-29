@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import android.view.KeyEvent;
+import android.view.View;
 import cz.madeta.droidssh.R;
 import org.connectbot.TerminalView;
 import org.connectbot.bean.HostBean;
@@ -32,6 +34,8 @@ import org.connectbot.bean.SelectionArea;
 import org.connectbot.transport.AbsTransport;
 import org.connectbot.transport.TransportFactory;
 import org.connectbot.util.HostDatabase;
+
+import com.honeywell.aidc.BarcodeReadEvent;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -49,6 +53,8 @@ import android.util.Log;
 import de.mud.terminal.VDUBuffer;
 import de.mud.terminal.VDUDisplay;
 import de.mud.terminal.vt320;
+
+import static de.mud.terminal.vt320.unEscape;
 
 /**
  * Provides a bridge between a MUD terminal buffer and a possible TerminalView.
@@ -126,39 +132,83 @@ public class TerminalBridge implements VDUDisplay {
 
 	private int ulCols = 0;
 	private int ulRows = 0;
+
 	public boolean isCornerMode() {
 		return (ulCols > 0) && (ulRows > 0);
 	}
+
 	public void setCornerMode(int cols, int rows, int vCols, int vRows) {
 		ulCols = cols;
 		ulRows = rows;
 		columns = vCols;
 		this.rows = vRows;
 	}
-	public int getCols() {return columns;}
-	public int getRows() {return rows;}
-	public int getVisibleCols() {return ulCols;}
-	public int getVisibleRows() {return ulRows;}
-	public boolean isClipEnabled() {if (this.host!=null) return host.getClipAllow(); return true;}
-	public boolean isBcAimPrefix() {if (this.host!=null) return host.getAimPrefixes(); return false;}
-	public String getSsccPrefix() {if (this.host!=null) return host.getBcSsccPrefix(); return "";}
-	public String getSsccF1() {if (this.host!=null) return host.getBcSsccF1(); return "";}
-	public String getBcPostfix() {if (this.host!=null) return host.getBarcodeSuffix(); return "";}
+
+	public int getCols() {
+		return columns;
+	}
+
+	public int getRows() {
+		return rows;
+	}
+
+	public int getVisibleCols() {
+		return ulCols;
+	}
+
+	public int getVisibleRows() {
+		return ulRows;
+	}
+
+	public boolean isClipEnabled() {
+		if (this.host != null) return host.getClipAllow();
+		return true;
+	}
+
+	public boolean isBcAimPrefix() {
+		if (this.host != null) return host.getAimPrefixes();
+		return false;
+	}
+
+	public String getSsccPrefix() {
+		if (this.host != null) return host.getBcSsccPrefix();
+		return "";
+	}
+
+	public String getSsccF1() {
+		if (this.host != null) return host.getBcSsccF1();
+		return "";
+	}
+
+	public String getBcPostfix() {
+		if (this.host != null) return host.getBarcodeSuffix();
+		return "";
+	}
+
 	/**
 	 * Create a new terminal bridge suitable for unit testing.
 	 */
 	public TerminalBridge() {
 		buffer = new vt320() {
 			@Override
-			public void write(byte[] b) {}
+			public void write(byte[] b) {
+			}
+
 			@Override
-			public void write(int b) {}
+			public void write(int b) {
+			}
+
 			@Override
-			public void sendTelnetCommand(byte cmd) {}
+			public void sendTelnetCommand(byte cmd) {
+			}
+
 			@Override
-			public void setWindowSize(int c, int r) {}
+			public void setWindowSize(int c, int r) {
+			}
+
 			@Override
-			public void debug(String s) {}
+			public void debug(String s) {
+			}
 		};
 
 		emulation = null;
@@ -188,8 +238,9 @@ public class TerminalBridge implements VDUDisplay {
 	public TerminalBridge(final TerminalManager manager, final HostBean host) {
 		this.manager = manager;
 		this.host = host;
-
-		emulation = manager.getEmulation();
+		emulation = host.getEmulation();
+		if (emulation == null || emulation.equals(""))
+			emulation = manager.getEmulation();
 		scrollback = manager.getScrollback();
 
 		// create prompt helper to relay password and hostkey requests up to gui
@@ -334,6 +385,7 @@ public class TerminalBridge implements VDUDisplay {
 	/**
 	 * Sets the encoding used by the terminal. If the connection is live,
 	 * then the character set is changed for the next read.
+	 *
 	 * @param encoding the canonical name of the character encoding
 	 */
 	public void setCharset(String encoding) {
@@ -421,14 +473,17 @@ public class TerminalBridge implements VDUDisplay {
 	}
 
 	private String ansback = "DroidSSH";
+
 	public void setAnswerBack(String a, String termid) {
-		ansback = a; emulation = termid;
+		ansback = a;
+		emulation = termid;
 		if (!disconnected) {
 			((vt320) buffer).setTerminalID(termid);
 			((vt320) buffer).setAnswerBack(termid);
 			((vt320) buffer).setAnswer5(a);
 		}
 	}
+
 	/**
 	 * Internal method to request actual PTY terminal once we've finished
 	 * authentication. If called before authenticated, it will just fail.
@@ -458,12 +513,12 @@ public class TerminalBridge implements VDUDisplay {
 			relayThread.setDaemon(true);
 			relayThread.setName("Relay");
 			relayThread.start();
-			Log.d(TAG,"onConnected - call invalidate/fullRedraw");
+			Log.d(TAG, "onConnected - call invalidate/fullRedraw");
 			try {
 				fullRedraw = true;
 				if (parent != null) {
 					if (isCornerMode())
-						parent.forceSize(columns,rows);
+						parent.forceSize(columns, rows);
 					this.parent.invalidate();
 				}
 			} catch (Exception e) {
@@ -576,7 +631,7 @@ public class TerminalBridge implements VDUDisplay {
 			return;
 		}
 
-		final int fontSizePx = (int) (sizeDp * displayDensity *	systemFontScale + 0.5f);
+		final int fontSizePx = (int) (sizeDp * displayDensity * systemFontScale + 0.5f);
 
 		defaultPaint.setTextSize(fontSizePx);
 		fontSizeDp = sizeDp;
@@ -616,8 +671,7 @@ public class TerminalBridge implements VDUDisplay {
 	 * Add an {@link FontSizeChangedListener} to the list of listeners for this
 	 * bridge.
 	 *
-	 * @param listener
-	 *            listener to add
+	 * @param listener listener to add
 	 */
 	public void addFontSizeChangedListener(FontSizeChangedListener listener) {
 		fontSizeChangedListeners.add(listener);
@@ -661,8 +715,8 @@ public class TerminalBridge implements VDUDisplay {
 
 			if (isCornerMode()) {
 				// ToDo CornerMode real size config
-				newColumns = columns <= ulCols?ulCols:columns;
-				newRows = rows<=ulRows?ulRows:rows;
+				newColumns = columns <= ulCols ? ulCols : columns;
+				newRows = rows <= ulRows ? ulRows : rows;
 			} else {
 				newColumns = width / charWidth;
 				newRows = height / charHeight;
@@ -676,7 +730,7 @@ public class TerminalBridge implements VDUDisplay {
 			rows = newRows;
 			refreshOverlayFontSize();
 		}
-		int bmpwid=width,bmphei = height;
+		int bmpwid = width, bmphei = height;
 		if (isCornerMode()) {
 			if (ulCols < columns)
 				bmpwid = width * columns / ulCols;
@@ -737,16 +791,19 @@ public class TerminalBridge implements VDUDisplay {
 		fullRedraw = true;
 		redraw();
 
-		try {Log.d(TAG,String.format("parentChanged parent->buffer w:%d->%d(%d/%d) h:%d->%d(%d/%d) ",
-				width,bmpwid,ulCols,columns,height,bmphei,ulRows,rows));}
-		catch (Exception e) {Log.e(TAG,e.toString());}
+		try {
+			Log.d(TAG, String.format("parentChanged parent->buffer w:%d->%d(%d/%d) h:%d->%d(%d/%d) ",
+					width, bmpwid, ulCols, columns, height, bmphei, ulRows, rows));
+		} catch (Exception e) {
+			Log.e(TAG, e.toString());
+		}
 
 		if (isCornerMode())
-			parent.notifyUser(String.format("%d x %d (visible:%d x %d)", columns, rows,ulCols,ulRows));
+			parent.notifyUser(String.format("%d x %d (visible:%d x %d)", columns, rows, ulCols, ulRows));
 		else
 			parent.notifyUser(String.format("%d x %d", columns, rows));
 
-		Log.i(TAG, String.format("parentChanged() now width=%d(%d), height=%d(%d)", columns,ulCols, rows,ulRows));
+		Log.i(TAG, String.format("parentChanged() now width=%d(%d), height=%d(%d)", columns, ulCols, rows, ulRows));
 	}
 
 	/**
@@ -870,8 +927,8 @@ public class TerminalBridge implements VDUDisplay {
 					defaultPaint.setColor(fg);
 					if ((currAttr & VDUBuffer.INVISIBLE) == 0)
 						canvas.drawText(buffer.charArray[buffer.windowBase + l], c,
-							addr, c * charWidth, (l * charHeight) - charTop,
-							defaultPaint);
+								addr, c * charWidth, (l * charHeight) - charTop,
+								defaultPaint);
 
 					// Restore the previous clip region
 					canvas.restore();
@@ -903,9 +960,9 @@ public class TerminalBridge implements VDUDisplay {
 	/**
 	 * Resize terminal to fit [rows]x[cols] in screen of size [width]x[height]
 	 *
-	 * @param rows desired number of text rows
-	 * @param cols desired numbor of text colums
-	 * @param width width of screen in pixels
+	 * @param rows   desired number of text rows
+	 * @param cols   desired numbor of text colums
+	 * @param width  width of screen in pixels
 	 * @param height height of screen in pixels
 	 */
 	public synchronized void resizeComputed(int cols, int rows, int width, int height) {
@@ -925,7 +982,7 @@ public class TerminalBridge implements VDUDisplay {
 			sizeDp += step;
 
 		if (direction == 0) {
-			Log.d("fontsize", String.format("Found match at %f", sizeDp));
+//			Log.d("fontsize", String.format("Found match at %f", sizeDp));
 			return;
 		}
 
@@ -961,14 +1018,14 @@ public class TerminalBridge implements VDUDisplay {
 		int termWidth = ((int) widths[0]) * cols;
 		int termHeight = (int) Math.ceil(fm.descent - fm.top) * rows;
 
-		Log.d("fontsize", String.format("font size %fdp resulted in %d x %d", sizeDp, termWidth, termHeight));
-
 		// Check to see if it fits in resolution specified.
 		if (termWidth > width || termHeight > height)
 			return 1;
 
-		if (termWidth == width || termHeight == height)
+		if (termWidth == width || termHeight == height) {
+			Log.d("fontsize", String.format("font size %fdp resulted in %d x %d", sizeDp, termWidth, termHeight));
 			return 0;
+		}
 
 		return -1;
 	}
@@ -982,7 +1039,7 @@ public class TerminalBridge implements VDUDisplay {
 			systemFontScale = newFontScale;
 			defaultPaint.setTextSize((int) (fontSizeDp * displayDensity * systemFontScale + 0.5f));
 			if (forcedSize)
-				resizeComputed(columns<=0?80:columns,rows<=0?25:rows,manager.getResources().getDisplayMetrics().widthPixels,manager.getResources().getDisplayMetrics().heightPixels * 7/8);
+				resizeComputed(columns <= 0 ? 80 : columns, rows <= 0 ? 25 : rows, manager.getResources().getDisplayMetrics().widthPixels, manager.getResources().getDisplayMetrics().heightPixels * 7 / 8);
 			else
 				setFontSize(fontSizeDp);
 		}
@@ -997,6 +1054,7 @@ public class TerminalBridge implements VDUDisplay {
 
 	/**
 	 * Adds the {@link PortForwardBean} to the list.
+	 *
 	 * @param portForward the port forward bean to add
 	 * @return true on successful addition
 	 */
@@ -1006,6 +1064,7 @@ public class TerminalBridge implements VDUDisplay {
 
 	/**
 	 * Removes the {@link PortForwardBean} from the list.
+	 *
 	 * @param portForward the port forward bean to remove
 	 * @return true on successful removal
 	 */
@@ -1023,6 +1082,7 @@ public class TerminalBridge implements VDUDisplay {
 	/**
 	 * Enables a port forward member. After calling this method, the port forward should
 	 * be operational.
+	 *
 	 * @param portForward member of our current port forwards list to enable
 	 * @return true on successful port forward setup
 	 */
@@ -1038,6 +1098,7 @@ public class TerminalBridge implements VDUDisplay {
 	/**
 	 * Disables a port forward member. After calling this method, the port forward should
 	 * be non-functioning.
+	 *
 	 * @param portForward member of our current port forwards list to enable
 	 * @return true on successful port forward tear-down
 	 */
@@ -1114,6 +1175,7 @@ public class TerminalBridge implements VDUDisplay {
 			String uriRegex = scheme + ":" + hierPart + "(?:" + query + ")?(?:#" + fragment + ")?";
 			urlPattern = Pattern.compile(uriRegex);
 		}
+
 		private static final Pattern urlPattern;
 	}
 
@@ -1170,5 +1232,25 @@ public class TerminalBridge implements VDUDisplay {
 	 */
 	public void decreaseFontSize() {
 		setFontSize(fontSizeDp - FONT_SIZE_STEP);
+	}
+
+	public void onBarcode(BarcodeReadEvent barcodeReadEvent) {
+		if (promptHelper!=null && promptHelper.promptRequested != null && String.class.equals(promptHelper.promptRequested)) {
+			// call handleMessage in ConsoleActivity -> hide prompts
+			try {promptHelper.handler.sendEmptyMessage(0);} catch (Exception e) {}
+			promptHelper.setResponse(barcodeReadEvent.getBarcodeData());
+			return;
+		}
+		String prefix = barcodeReadEvent.getAimId(), suffix = getBcPostfix();
+		if(!isBcAimPrefix())prefix ="";
+		if(barcodeReadEvent.getCodeId().equals("I")) { // EAN128
+			String x = getSsccPrefix();
+			if (x != null && !x.equals("")) prefix = x;
+			x = getSsccF1();
+			if (x == null) x = ""; else x = unEscape(x);
+			injectString(unEscape(prefix) + barcodeReadEvent.getBarcodeData().replaceAll("\u001d", x) + unEscape(suffix));
+		} else {
+			injectString(unEscape(prefix) + barcodeReadEvent.getBarcodeData() + unEscape(suffix));
+		}
 	}
 }

@@ -62,6 +62,7 @@ public class HostBean extends AbstractBean {
 	private int ulRows=0,ulCols=0,ulVirtCols=0,ulVirtRows=0;
 	private String barcodeSuffix="", bcSsccF1="\\x1d", bcSsccPrefix="";
 	private boolean autoConnect=false, clipAllow=true, bcAimPrefixes=false;
+	private String emulation=null;
 	public HostBean() {
 	}
 
@@ -312,7 +313,7 @@ public class HostBean extends AbstractBean {
 		values.put(HostDatabase.FIELD_HOST_CORNER,ulCols==0 && ulRows==0 ? "" : ("" + ulCols + "x" + ulRows));
 		values.put(HostDatabase.FIELD_HOST_VIRTUAL,ulVirtCols==0 && ulVirtRows==0 ? "" : ("" + ulVirtCols + "x" + ulVirtRows));
 		values.put(HostDatabase.FIELD_HOST_ALLOWCLIP,Boolean.toString(clipAllow));
-
+		values.put(HostDatabase.FIELD_HOST_EMULATION,emulation);
 		return values;
 	}
 
@@ -344,6 +345,7 @@ public class HostBean extends AbstractBean {
 		host.setBarcodeConfig(values.getAsString(HostDatabase.FIELD_HOST_BARCODE_CONFIG));
 		host.setBarcodeSuffix(values.getAsString(HostDatabase.FIELD_HOST_BARCODE_SUFFIX));
 		host.setClipAllow(values.getAsBoolean(HostDatabase.FIELD_HOST_ALLOWCLIP));
+		host.setEmulation(values.getAsString(HostDatabase.FIELD_HOST_EMULATION));
 		return host;
 	}
 
@@ -454,4 +456,6 @@ public class HostBean extends AbstractBean {
 		return "";
 	}
 
+	public String getEmulation() {return emulation;	}
+	public void setEmulation(String value) {emulation = value;}
 }

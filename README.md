@@ -7,14 +7,25 @@ ConnectBot is a [Secure Shell](https://en.wikipedia.org/wiki/Secure_Shell)
 client for Android that lets you connect to remote servers over a
 cryptographically secure link.
 
+## Extensions
 
-## Google Play
-
-[![Get it on Google Play][2]][1]
-
-  [1]: https://play.google.com/store/apps/details?id=org.connectbot
-  [2]: https://developer.android.com/images/brand/en_generic_rgb_wo_60.png
-
+For Honeywell CK65 Android 
+ - Hardware keyboard F1..F12 support
+ - Setting + Host management : Available only in Provisioning Mode
+ - Export/Import settings : Deploy exported file from one device to others
+   (in Downloads/droidssh.xml) - ConnectBot/DroidSSH automaticaly import newer file than last imported on startup.
+ - CornerMode - visible only upper left ?? cols/rows from "virtual size"
+ - Change emulation per host
+ - Ask for username (use question ? as username)
+ - Can save plain text password
+ - Username / Password from barcode scan
+ - Enable/Disable AIM Barcode prefixes (for all barcodes)
+ - Set EAN128 (Code128 SSCC barcode) custom prefix
+ - Replace FN1 in Code128 by user defined sequence (default \x1d )
+ - Set barcode suffix (\x0d = enter, \x09 = Tab)
+ - AutoConnect on statrup (Not yet implemented - only switch in Host Settings)
+ - Device info on ESC[8n sequence (Madeta extension) try # echo -e '\e[8n' ; cat -
+ - Device Serial + System Build ID answerback (\005) try # echo -e '\005'; cat -
 
 ## Compiling
 

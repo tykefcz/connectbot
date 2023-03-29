@@ -29,7 +29,11 @@ import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import android.view.KeyEvent;
+import android.view.View;
 import cz.madeta.droidssh.R;
+
+import org.connectbot.TerminalView;
 import org.connectbot.bean.HostBean;
 import org.connectbot.bean.PubkeyBean;
 import org.connectbot.data.ColorStorage;
@@ -41,6 +45,13 @@ import org.connectbot.util.ProviderLoader;
 import org.connectbot.util.ProviderLoaderListener;
 import org.connectbot.util.PubkeyDatabase;
 import org.connectbot.util.PubkeyUtils;
+
+import com.honeywell.aidc.AidcManager;
+import com.honeywell.aidc.BarcodeFailureEvent;
+import com.honeywell.aidc.BarcodeReader;
+import com.honeywell.aidc.ScannerNotClaimedException;
+import com.honeywell.aidc.ScannerUnavailableException;
+import com.honeywell.aidc.UnsupportedPropertyException;
 
 import android.app.Service;
 import android.content.Context;
@@ -59,6 +70,8 @@ import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import static de.mud.terminal.vt320.unEscape;
+
 /**
  * Manager for SSH connections that runs as a service. This service holds a list
  * of currently connected SSH bridges that are ready for connection up to a GUI
@@ -66,7 +79,7 @@ import android.util.Log;
  *
  * @author jsharkey
  */
-public class TerminalManager extends Service implements BridgeDisconnectedListener, OnSharedPreferenceChangeListener, ProviderLoaderListener {
+public class TerminalManager extends Service implements BridgeDisconnectedListener, OnSharedPreferenceChangeListener, ProviderLoaderListener, BarcodeReader.BarcodeListener {
 	public final static String TAG = "CB.TerminalManager";
 
 	private final ArrayList<TerminalBridge> bridges = new ArrayList<>();
@@ -116,6 +129,37 @@ public class TerminalManager extends Service implements BridgeDisconnectedListen
 
 	public boolean hardKeyboardHidden;
 
+	// Honeywell Section
+	private static BarcodeReader _bcrd  = null;
+	private static Object bcrdListener = null;
+	private static AidcManager _aidcManager = null;
+	static BarcodeReader getBarcodeReader() {
+		if (_bcrd == null && _aidcManager!=null)
+			try {
+				_bcrd = _aidcManager.createBarcodeReader();
+				Log.d(TAG, "Honeywell Aidc.BarcodeReader onCreated OK");
+				if (_bcrd != null) {
+					// apply settings
+					try {
+						_bcrd.setProperty(BarcodeReader.PROPERTY_CODE_39_ENABLED, false);
+					} catch (UnsupportedPropertyException pe) {	}
+					try {
+						_bcrd.setProperty(BarcodeReader.PROPERTY_DATAMATRIX_ENABLED, true);
+					} catch (UnsupportedPropertyException pe) {	}
+					// set the trigger mode to automatic control
+					try {
+						_bcrd.setProperty(BarcodeReader.PROPERTY_TRIGGER_CONTROL_MODE,
+								BarcodeReader.TRIGGER_CONTROL_MODE_AUTO_CONTROL);
+					} catch (UnsupportedPropertyException pe) {	}
+				} else
+					Log.d(TAG, "barcode reader is null onCreate");
+			} catch (com.honeywell.aidc.InvalidScannerNameException e) {
+				Log.w(TAG, "Honeywell Aidc.BarcodeReader ex:" + e);
+			}
+		return _bcrd;
+	}
+	// End Honeywell section
+
 	@Override
 	public void onCreate() {
 		Log.i(TAG, "Starting service");
@@ -157,6 +201,19 @@ public class TerminalManager extends Service implements BridgeDisconnectedListen
 
 		connectivityManager = new ConnectivityReceiver(this, lockingWifi);
 
+		if (_aidcManager == null) {
+			AidcManager.create(this, new AidcManager.CreatedCallback() {
+				@Override
+				public void onCreated(AidcManager aidc) {
+					_aidcManager = aidc;
+					synchronized (_aidcManager) {
+						getBarcodeReader();
+						bcrdClaim();
+					}
+				}
+			});
+		}
+
 		ProviderLoader.load(this, this);
 	}
 
@@ -181,6 +238,17 @@ public class TerminalManager extends Service implements BridgeDisconnectedListen
 		}
 
 		connectivityManager.cleanup();
+
+		if (_aidcManager != null) synchronized (_aidcManager) {
+			BarcodeReader bcrd = getBarcodeReader();
+			if (bcrd != null) {
+				if (bcrdListener == this) {
+					try { _bcrd.removeBarcodeListener(this); } catch (Exception e) { };
+					bcrdListener = null;
+				}
+				bcrd.release();
+			}
+		}
 
 		ConnectionNotifier.getInstance().hideRunningNotification(this);
 
@@ -509,7 +577,30 @@ public class TerminalManager extends Service implements BridgeDisconnectedListen
 		super.onRebind(intent);
 		Log.i(TAG, "Someone rebound to TerminalManager with " + bridges.size() + " bridges active");
 		keepServiceAlive();
+		bcrdClaim();
 		setResizeAllowed(true);
+	}
+
+	protected void bcrdClaim() {
+		BarcodeReader bcrd = getBarcodeReader();
+		if (bcrd != null) {
+			if (bcrdListener == null || bcrdListener != this) {
+				synchronized (_aidcManager) {
+					if (bcrdListener != null)
+						try {_bcrd.removeBarcodeListener((BarcodeReader.BarcodeListener) bcrdListener);} catch (Exception e) { };
+					_bcrd.addBarcodeListener(this);
+					bcrdListener = this;
+					Log.d(TAG,"bcrd Listener added");
+				}
+			}
+			try {
+				bcrd.claim();
+				Log.d(TAG,"bcrd claimed");
+			} catch(Exception e) {
+				Log.d(TAG,"bcrd ex:",e);
+			}
+		} else
+			Log.d(TAG,"barcode reader is null");
 	}
 
 	@Override
@@ -525,6 +616,17 @@ public class TerminalManager extends Service implements BridgeDisconnectedListen
 			for (TerminalBridge bridge : bridges) {
 				bridge.promptHelper.setHandler(null);
 			}
+		}
+
+		if (_aidcManager != null) synchronized (_aidcManager) {
+			BarcodeReader bcrd = getBarcodeReader();
+			if (bcrd != null)
+				try {
+					bcrd.release();
+					Log.d(TAG,"bcrd released");
+				} catch(Exception e) {
+					Log.d(TAG,"bcrd ex:" + e);
+				}
 		}
 
 		return true;
@@ -736,6 +838,28 @@ public class TerminalManager extends Service implements BridgeDisconnectedListen
 	private void notifyHostStatusChanged() {
 		for (OnHostStatusChangedListener listener : hostStatusChangedListeners) {
 			listener.onHostStatusChanged();
+		}
+	}
+
+	@Override
+	public void onBarcodeEvent(com.honeywell.aidc.BarcodeReadEvent barcodeReadEvent) {
+		if (barcodeReadEvent == null || barcodeReadEvent.getBarcodeData() == null || barcodeReadEvent.getBarcodeData().equals(""))
+			return;
+		Log.d(TAG,"onBarcode: " + (barcodeReadEvent==null?"nil":barcodeReadEvent.getBarcodeData())
+				+ ":a=" + barcodeReadEvent.getAimId() + ":i=" + barcodeReadEvent.getCodeId() + " for:" + (defaultBridge==null||defaultBridge.host==null?"nil":defaultBridge.host.getNickname()));
+		if (defaultBridge==null) return;
+		defaultBridge.onBarcode(barcodeReadEvent);
+	}
+
+	@Override
+	public void onFailureEvent(BarcodeFailureEvent barcodeFailureEvent) {
+		Log.d(TAG,"onFailureEvent: " + (barcodeFailureEvent==null?"nil":barcodeFailureEvent.toString()));
+		try {
+			if (getBarcodeReader()!=null) getBarcodeReader().softwareTrigger(false);
+		} catch (ScannerNotClaimedException e) {
+			e.printStackTrace();
+		} catch (ScannerUnavailableException e) {
+			e.printStackTrace();
 		}
 	}
 }

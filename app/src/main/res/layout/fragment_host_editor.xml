@@ -432,7 +432,25 @@
 				/>
 
 		</RelativeLayout>
+		<RelativeLayout
+			android:id="@+id/emul_item"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/encoding_item"
+			android:focusable="true" >
 
+			<Spinner
+				android:id="@+id/hostemulation"
+				android:layout_width="match_parent"
+				android:layout_height="48dp"
+				android:layout_marginStart="70dp"
+				android:choiceMode="singleChoice"
+				android:defaultValue="xterm-256color"
+				android:entries="@array/list_emulation_modes"
+				android:entryValues="@array/list_emulation_modes"
+				android:summary="@string/pref_emulation_summary"
+				android:title="@string/pref_emulation_title" />
+	    </RelativeLayout >
 		<RelativeLayout
 			android:orientation="horizontal"
 			android:layout_width="match_parent"

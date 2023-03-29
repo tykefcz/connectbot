@@ -100,12 +100,12 @@ public class SSH extends AbsTransport implements ConnectionMonitor, InteractiveC
 	private static final String PROTOCOL = "ssh";
 	private static final String TAG = "CB.SSH";
 	private static final int DEFAULT_PORT = 22;
-
 	private static final String AUTH_PUBLICKEY = "publickey",
 		AUTH_PASSWORD = "password",
 		AUTH_KEYBOARDINTERACTIVE = "keyboard-interactive";
 
 	private final static int AUTH_TRIES = 20;
+	private String username = null;
 
 	private static final Pattern hostmask = Pattern.compile(
 			"^(.+)@(([0-9a-z.-]+)|(\\[[a-f:0-9]+\\]))(:(\\d+))?$", Pattern.CASE_INSENSITIVE);
@@ -235,9 +235,25 @@ public class SSH extends AbsTransport implements ConnectionMonitor, InteractiveC
 		}
 	}
 
+	private boolean isUsernameOk() {
+		if (username == null) { // first check
+			username = host.getUsername();
+			if (username == null || username.equals("") || username.equals("?")) {
+				bridge.outputLine(manager.res.getString(R.string.hostpref_username_title));
+				username = bridge.getPromptHelper().requestStringPrompt(null,
+						manager.res.getString(R.string.hostpref_username_title));
+			}
+		}
+		if (username == null) username = ""; // No Again
+		return !username.equals("");
+	}
 	private void authenticate() {
+		if (!isUsernameOk()) {
+			finishConnection();
+			return;
+		}
 		try {
-			if (connection.authenticateWithNone(host.getUsername())) {
+			if (connection.authenticateWithNone(username)) {
 				finishConnection();
 				return;
 			}
@@ -252,7 +268,7 @@ public class SSH extends AbsTransport implements ConnectionMonitor, InteractiveC
 
 			if (!pubkeysExhausted &&
 					pubkeyId != HostDatabase.PUBKEYID_NEVER &&
-					connection.isAuthMethodAvailable(host.getUsername(), AUTH_PUBLICKEY)) {
+					connection.isAuthMethodAvailable(username, AUTH_PUBLICKEY)) {
 
 				// if explicit pubkey defined for this host, then prompt for password as needed
 				// otherwise just try all in-memory keys held in terminalmanager
@@ -266,7 +282,7 @@ public class SSH extends AbsTransport implements ConnectionMonitor, InteractiveC
 								&& !promptForPubkeyUse(entry.getKey()))
 							continue;
 
-						if (this.tryPublicKey(host.getUsername(), entry.getKey(),
+						if (this.tryPublicKey(username, entry.getKey(),
 								entry.getValue().pair)) {
 							finishConnection();
 							break;
@@ -286,25 +302,25 @@ public class SSH extends AbsTransport implements ConnectionMonitor, InteractiveC
 
 				pubkeysExhausted = true;
 			} else if (interactiveCanContinue &&
-					connection.isAuthMethodAvailable(host.getUsername(), AUTH_KEYBOARDINTERACTIVE)) {
+					connection.isAuthMethodAvailable(username, AUTH_KEYBOARDINTERACTIVE)) {
 				// this auth method will talk with us using InteractiveCallback interface
 				// it blocks until authentication finishes
 				bridge.outputLine(manager.res.getString(R.string.terminal_auth_ki));
 				interactiveCanContinue = false;
-				if (connection.authenticateWithKeyboardInteractive(host.getUsername(), this)) {
+				if (connection.authenticateWithKeyboardInteractive(username, this)) {
 					finishConnection();
 				} else {
 					bridge.outputLine(manager.res.getString(R.string.terminal_auth_ki_fail));
 				}
-			} else if (connection.isAuthMethodAvailable(host.getUsername(), AUTH_PASSWORD)) {
+			} else if (connection.isAuthMethodAvailable(username, AUTH_PASSWORD)) {
 				String password = host.getPassword();
-				if (password == null) {
+				if (password == null || password.equals("") || password.equals("?")) {
 					bridge.outputLine(manager.res.getString(R.string.terminal_auth_pass));
 					password = bridge.getPromptHelper().requestStringPrompt(null,
 							manager.res.getString(R.string.prompt_password));
 				}
 				if (password != null
-						&& connection.authenticateWithPassword(host.getUsername(), password)) {
+						&& connection.authenticateWithPassword(username, password)) {
 					finishConnection();
 				} else {
 					bridge.outputLine(manager.res.getString(R.string.terminal_auth_pass_fail));
@@ -380,8 +396,8 @@ public class SSH extends AbsTransport implements ConnectionMonitor, InteractiveC
 			// save this key in memory
 			manager.addKey(pubkey, pair);
 		}
-
-		return tryPublicKey(host.getUsername(), pubkey.getNickname(), pair);
+		if (!isUsernameOk()) return false;
+		return tryPublicKey(username, pubkey.getNickname(), pair);
 	}
 
 	private boolean tryPublicKey(String username, String keyNickname, KeyPair pair) throws IOException {
