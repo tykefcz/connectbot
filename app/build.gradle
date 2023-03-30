@@ -14,7 +14,7 @@ plugins {
 	id 'com.github.kt3k.coveralls' version '2.12.2'
 	id 'com.github.johnrengelman.processes' version '0.5.0'
 	id 'com.hiya.jacoco-android' version '0.2'
-	id 'com.starter.easylauncher' version "6.1.0"
+//	id 'com.starter.easylauncher' version "6.1.0"
 }
 
 ext {
@@ -28,8 +28,12 @@ apply from: '../config/quality.gradle'
 coveralls.jacocoReportPath = 'build/reports/coverage/google/debug/report.xml'
 
 androidGitVersion {
+	abis = ["x86":1, "x86_64":2, "armeabi-v7a":3, "arm64-v8a":4]
 	prefix = "v"
 	codeFormat = 'MMNNPPBBB'
+	onlyIn = 'app'
+	untrackedIsDirty = false
+	format '%tag%%.count%%<commit>%%-branch%'
 }
 
 android {
@@ -37,10 +41,10 @@ android {
 
 	defaultConfig {
 		applicationId "cz.madeta.droidssh"
-		//versionName androidGitVersion.name()
-		//versionCode androidGitVersion.code()
-		versionName	"1.9.9"
-		versionCode 10909000
+		versionName androidGitVersion.name()
+		versionCode androidGitVersion.code()
+		//versionName	"1.9.9"
+		//versionCode 10909000
 
 		minSdkVersion 24
 		targetSdkVersion 31
@@ -198,6 +202,7 @@ task stopAdbForwarding {
 	}
 }
 
+/*
 afterEvaluate {
 	tasks.all { t ->
 		if (t.name.startsWith("connected") && t.name.endsWith("AndroidTest")) {
@@ -206,7 +211,7 @@ afterEvaluate {
 		}
 	}
 }
-
+*/
 // Do not want any release candidates for updates.
 dependencyUpdates {
 	revision = "release"
@@ -244,9 +249,12 @@ dependencies {
 	ossImplementation 'org.conscrypt:conscrypt-android:2.5.2'
 
 	implementation "androidx.recyclerview:recyclerview:1.2.1"
-	implementation 'androidx.appcompat:appcompat:1.6.1'
+//	implementation 'androidx.appcompat:appcompat:1.6.1'
+	implementation 'androidx.appcompat:appcompat:1.4.1'
 	implementation "androidx.preference:preference:1.2.0"
-	implementation "com.google.android.material:material:1.8.0"
+//	implementation "com.google.android.material:material:1.8.0"
+//	implementation "com.google.android.material:material:1.7.0"
+	implementation "com.google.android.material:material:1.6.0"
 
 	androidTestUtil "androidx.test:orchestrator:$testRunnerVersion"
 	androidTestImplementation "androidx.test:core:1.5.0"
@@ -269,3 +277,8 @@ dependencies {
 	errorprone "com.google.errorprone:error_prone_core:2.18.0"
 }
 
+configurations {
+    all {
+        exclude group: 'androidx.lifecycle', module: 'lifecycle-viewmodel-ktx'
+    }
+}
