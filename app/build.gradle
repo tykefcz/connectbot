@@ -7,7 +7,7 @@ buildscript {
 }
 
 plugins {
-	id 'com.android.application' // version '7.2.2'
+	id 'com.android.application' // version '7.1.1'
 	id 'com.github.ben-manes.versions' version '0.46.0'
 	id 'net.ltgt.errorprone' version '3.0.1'
 	id 'com.gladed.androidgitversion' version '0.4.14'
@@ -17,10 +17,10 @@ plugins {
 //	id 'com.starter.easylauncher' version "6.1.0"
 }
 
-ext {
-	testRunnerVersion = '1.4.1'
-	espressoVersion = '3.5.1'
-}
+//ext {
+//	testRunnerVersion = '1.5.0'
+//	espressoVersion = '3.5.1'
+//}
 
 apply plugin: 'com.diffplug.spotless'
 apply from: '../config/quality.gradle'
@@ -38,6 +38,8 @@ androidGitVersion {
 
 android {
 	compileSdkVersion 33
+
+	namespace "cz.madeta.droidssh"
 
 	defaultConfig {
 		applicationId "cz.madeta.droidssh"
@@ -67,6 +69,12 @@ android {
 	}
 
 	signingConfigs {
+		debug {
+			storeFile file('/home/gabriel/AndroidStudioProjects/madeta.jks')
+			storePassword 'krava01'
+			keyAlias 'madeta'
+			keyPassword 'krava01'
+		}
 		if (project.hasProperty('keystorePassword')) {
 			release {
 				storeFile file(property('keystoreFile'))
@@ -256,25 +264,25 @@ dependencies {
 //	implementation "com.google.android.material:material:1.7.0"
 	implementation "com.google.android.material:material:1.6.0"
 
-	androidTestUtil "androidx.test:orchestrator:$testRunnerVersion"
-	androidTestImplementation "androidx.test:core:1.5.0"
-	androidTestImplementation "androidx.test:rules:$testRunnerVersion"
-	androidTestImplementation "androidx.test.espresso:espresso-core:$espressoVersion"
-	androidTestImplementation "androidx.test.espresso:espresso-intents:$espressoVersion"
-	androidTestImplementation("androidx.test.espresso:espresso-contrib:$espressoVersion") {
-		exclude group: "com.google.android.apps.common.testing.accessibility.framework", module: "accessibility-test-framework"
-	}
-	androidTestImplementation "androidx.test.ext:junit:1.1.5"
-	androidTestImplementation "com.linkedin.testbutler:test-butler-library:2.2.1"
+//	androidTestUtil "androidx.test:orchestrator:$testRunnerVersion"
+//	androidTestImplementation "androidx.test:core:1.5.0"
+//	androidTestImplementation "androidx.test:rules:$testRunnerVersion"
+//	androidTestImplementation "androidx.test.espresso:espresso-core:$espressoVersion"
+//	androidTestImplementation "androidx.test.espresso:espresso-intents:$espressoVersion"
+//	androidTestImplementation("androidx.test.espresso:espresso-contrib:$espressoVersion") {
+//		exclude group: "com.google.android.apps.common.testing.accessibility.framework", module: "accessibility-test-framework"
+//	}
+//	androidTestImplementation "androidx.test.ext:junit:1.1.5"
+//	androidTestImplementation "com.linkedin.testbutler:test-butler-library:2.2.1"
 
-	testImplementation 'junit:junit:4.13.2'
-	testImplementation "androidx.test:core:1.5.0"
-	testImplementation "androidx.test.ext:junit:1.1.5"
-	testImplementation 'org.mockito:mockito-core:5.1.1'
-	testImplementation 'org.assertj:assertj-core:3.24.2'
-	testImplementation 'org.robolectric:robolectric:4.8.2'
+//	testImplementation 'junit:junit:4.13.2'
+//	testImplementation "androidx.test:core:1.5.0"
+//	testImplementation "androidx.test.ext:junit:1.1.5"
+//	testImplementation 'org.mockito:mockito-core:5.1.1'
+//	testImplementation 'org.assertj:assertj-core:3.24.2'
+//	testImplementation 'org.robolectric:robolectric:4.8.2'
 
-	errorprone "com.google.errorprone:error_prone_core:2.18.0"
+//	errorprone "com.google.errorprone:error_prone_core:2.18.0"
 }
 
 configurations {

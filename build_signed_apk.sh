@@ -3,8 +3,10 @@ export JAVA_HOME
 ./gradlew app:packageGoogleReleaseUniversalApk
 
 # from AndroidStudio:
-# out=app/google/release/app-google-release.apk
+# out=app/build/outputs/apk/google/release/app-google-release.apk
 # from gradlew:
-out=app/build/outputs/universal_apk/googleRelease/app-google-release-universal.apk
+# AGP 4.2.2: out=app/build/outputs/universal_apk/googleRelease/app-google-release-universal.apk
+# AGP 7+: (AGP=Android Gradle Plugin)
+out=app/build/outputs/apk_from_bundle/googleRelease/app-google-release-universal.apk
 ls -l $out
-apksigner verify --verbose $out
+apksigner verify --print-certs --verbose $out

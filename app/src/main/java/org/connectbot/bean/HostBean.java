@@ -319,33 +319,33 @@ public class HostBean extends AbstractBean {
 
 	public static HostBean fromContentValues(ContentValues values) {
 		HostBean host = new HostBean();
-		host.setNickname(values.getAsString(HostDatabase.FIELD_HOST_NICKNAME));
-		host.setProtocol(values.getAsString(HostDatabase.FIELD_HOST_PROTOCOL));
-		host.setUsername(values.getAsString(HostDatabase.FIELD_HOST_USERNAME));
-		host.setHostname(values.getAsString(HostDatabase.FIELD_HOST_HOSTNAME));
-		host.setPort(values.getAsInteger(HostDatabase.FIELD_HOST_PORT));
-		host.setLastConnect(values.getAsLong(HostDatabase.FIELD_HOST_LASTCONNECT));
-		host.setColor(values.getAsString(HostDatabase.FIELD_HOST_COLOR));
-		host.setUseKeys(Boolean.valueOf(values.getAsString(HostDatabase.FIELD_HOST_USEKEYS)));
-		host.setUseAuthAgent(values.getAsString(HostDatabase.FIELD_HOST_USEAUTHAGENT));
-		host.setPostLogin(values.getAsString(HostDatabase.FIELD_HOST_POSTLOGIN));
-		host.setPubkeyId(values.getAsLong(HostDatabase.FIELD_HOST_PUBKEYID));
-		host.setWantSession(Boolean.valueOf(values.getAsString(HostDatabase.FIELD_HOST_WANTSESSION)));
-		host.setDelKey(values.getAsString(HostDatabase.FIELD_HOST_DELKEY));
-		host.setFontSize(values.getAsInteger(HostDatabase.FIELD_HOST_FONTSIZE));
-		host.setCompression(Boolean.valueOf(values.getAsString(HostDatabase.FIELD_HOST_COMPRESSION)));
-		host.setEncoding(values.getAsString(HostDatabase.FIELD_HOST_ENCODING));
-		host.setStayConnected(values.getAsBoolean(HostDatabase.FIELD_HOST_STAYCONNECTED));
-		host.setQuickDisconnect(values.getAsBoolean(HostDatabase.FIELD_HOST_QUICKDISCONNECT));
+		try {host.setNickname(values.getAsString(HostDatabase.FIELD_HOST_NICKNAME));} catch (Exception e) {}
+		try {host.setProtocol(values.getAsString(HostDatabase.FIELD_HOST_PROTOCOL));} catch (Exception e) {}
+		try {host.setUsername(values.getAsString(HostDatabase.FIELD_HOST_USERNAME));} catch (Exception e) {}
+		try {host.setHostname(values.getAsString(HostDatabase.FIELD_HOST_HOSTNAME));} catch (Exception e) {}
+		try {host.setPort(values.getAsInteger(HostDatabase.FIELD_HOST_PORT));} catch (Exception e) {}
+		try {host.setLastConnect(values.getAsLong(HostDatabase.FIELD_HOST_LASTCONNECT));} catch (Exception e) {}
+		try {host.setColor(values.getAsString(HostDatabase.FIELD_HOST_COLOR));} catch (Exception e) {}
+		try {host.setUseKeys(Boolean.valueOf(values.getAsString(HostDatabase.FIELD_HOST_USEKEYS)));} catch (Exception e) {}
+		try {host.setUseAuthAgent(values.getAsString(HostDatabase.FIELD_HOST_USEAUTHAGENT));} catch (Exception e) {}
+		try {host.setPostLogin(values.getAsString(HostDatabase.FIELD_HOST_POSTLOGIN));} catch (Exception e) {}
+		try {host.setPubkeyId(values.getAsLong(HostDatabase.FIELD_HOST_PUBKEYID));} catch (Exception e) {}
+		try {host.setWantSession(Boolean.valueOf(values.getAsString(HostDatabase.FIELD_HOST_WANTSESSION)));} catch (Exception e) {}
+		try {host.setDelKey(values.getAsString(HostDatabase.FIELD_HOST_DELKEY));} catch (Exception e) {}
+		try {host.setFontSize(values.getAsInteger(HostDatabase.FIELD_HOST_FONTSIZE));} catch (Exception e) {}
+		try {host.setCompression(Boolean.valueOf(values.getAsString(HostDatabase.FIELD_HOST_COMPRESSION)));} catch (Exception e) {}
+		try {host.setEncoding(values.getAsString(HostDatabase.FIELD_HOST_ENCODING));} catch (Exception e) {}
+		try {host.setStayConnected(values.getAsBoolean(HostDatabase.FIELD_HOST_STAYCONNECTED));} catch (Exception e) {}
+		try {host.setQuickDisconnect(values.getAsBoolean(HostDatabase.FIELD_HOST_QUICKDISCONNECT));} catch (Exception e) {}
 
-		host.setPassword(values.getAsString(HostDatabase.FIELD_HOST_PASSWORD));
-		host.setVirtualArea(values.getAsString(HostDatabase.FIELD_HOST_VIRTUAL));
-		host.setCornerArea(values.getAsString(HostDatabase.FIELD_HOST_CORNER));
-		host.setAutoconnect(values.getAsBoolean(HostDatabase.FIELD_HOST_AUTOCONNECT));
-		host.setBarcodeConfig(values.getAsString(HostDatabase.FIELD_HOST_BARCODE_CONFIG));
-		host.setBarcodeSuffix(values.getAsString(HostDatabase.FIELD_HOST_BARCODE_SUFFIX));
-		host.setClipAllow(values.getAsBoolean(HostDatabase.FIELD_HOST_ALLOWCLIP));
-		host.setEmulation(values.getAsString(HostDatabase.FIELD_HOST_EMULATION));
+		try {host.setPassword(values.getAsString(HostDatabase.FIELD_HOST_PASSWORD));} catch (Exception e) {}
+		try {host.setVirtualArea(values.getAsString(HostDatabase.FIELD_HOST_VIRTUAL));} catch (Exception e) {}
+		try {host.setCornerArea(values.getAsString(HostDatabase.FIELD_HOST_CORNER));} catch (Exception e) {}
+		try {host.setAutoconnect(values.getAsBoolean(HostDatabase.FIELD_HOST_AUTOCONNECT));} catch (Exception e) {}
+		try {host.setBarcodeConfig(values.getAsString(HostDatabase.FIELD_HOST_BARCODE_CONFIG));} catch (Exception e) {}
+		try {host.setBarcodeSuffix(values.getAsString(HostDatabase.FIELD_HOST_BARCODE_SUFFIX));} catch (Exception e) {}
+		try {host.setClipAllow(values.getAsBoolean(HostDatabase.FIELD_HOST_ALLOWCLIP));} catch (Exception e) {}
+		try {host.setEmulation(values.getAsString(HostDatabase.FIELD_HOST_EMULATION));} catch (Exception e) {}
 		return host;
 	}
 
