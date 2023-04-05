@@ -30,12 +30,13 @@ import android.util.Base64;
 import android.util.Log;
 import android.util.Xml;
 
-// ToDo G Přesměrovávání Barcode z TermnalPager -> aktual page
-// ToDo G Host bez jména - s promptem (včetně barcode)
-
 public class HonUtils {
 	private static final String tag = "HonUtils";
 	// sys.hsm.provisioning]: [true
+	private static int counter = 0;
+	public static int getCounter() {return counter;	}
+	public static void incCounter() {counter++;}
+	public static void setCounter(int value) {counter = value;}
 	public static String getSysProp(String propName) {
 		String retVal = null;
 

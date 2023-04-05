@@ -165,9 +165,7 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 			Log.d(TAG, "Got disconnect all request");
 			disconnectAll();
 		} else {
-
 		}
-
 		// Still close on disconnect if waiting for a disconnect.
 		closeOnDisconnectAll = waitingForDisconnectAll && closeOnDisconnectAll;
 	}
@@ -270,6 +268,7 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 			try {
 				HonUtils.importSettingsAndHosts(this, expimpFilename);
 			} catch (Exception e) {}
+			updateList();
 		}
 		else Log.d(TAG,"NO importing settings from file " + lastImpStamp + " >= " + expsetfile.lastModified() + " '" + expimpFilename + "'");
 		this.inflater = LayoutInflater.from(this);
@@ -375,6 +374,7 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 			public boolean onMenuItemClick(@NonNull MenuItem menuItem) {
 				Log.d(TAG,"Import from " + expimpFilename);
 				HonUtils.importSettingsAndHosts(getApplicationContext(), expimpFilename);
+				updateList();
 				return false;
 			}
 		});
@@ -471,6 +471,20 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 		mAdapter = new HostAdapter(this, hosts, bound);
 		mListView.setAdapter(mAdapter);
 		adjustViewVisibility();
+		if (HonUtils.getCounter() <= 0) {
+			// first run nonempty
+			//Log.d(TAG,"AutoConnect FirstRun " + HonUtils.getCounter());
+			HonUtils.incCounter();
+			if (hosts!=null && !(hosts.isEmpty()) && mAdapter!=null && mAdapter.getItemCount() > 0) {
+				for (int i = 0; i < hosts.size(); i++) {
+					if (hosts.get(i).getAutoconnect()) {
+						Log.d(TAG,"AutoConnect to " + hosts.get(i).getNickname());
+						((HostAdapter) mAdapter).connectHost(hosts.get(i));
+					//} else { Log.d(TAG,"AutoConnect Diabled for " + hosts.get(i).getNickname());
+					}
+				}
+			}
+		}
 	}
 
 	@Override
@@ -636,6 +650,16 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 			}
 
 			return STATE_UNKNOWN;
+		}
+
+		public void connectHost(HostBean host) {
+			if (this.manager == null || host == null) return;
+			Uri uri = host.getUri();
+
+			Intent contents = new Intent(Intent.ACTION_VIEW, uri);
+			contents.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+			contents.setClass(HostListActivity.this, ConsoleActivity.class);
+			HostListActivity.this.startActivity(contents);
 		}
 
 		@Override
