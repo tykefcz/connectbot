@@ -1245,7 +1245,20 @@ public class TerminalBridge implements VDUDisplay {
 	public void decreaseFontSize() {
 		setFontSize(fontSizeDp - FONT_SIZE_STEP);
 	}
-
+	protected static String ean813CheckDigit(String bc) {
+		if (bc.length()==13 || bc.length()==8)
+			bc = bc.substring(0,bc.length()-1);
+		else if (bc.length()!=12 && bc.length()!=7)
+			return bc; // no 7/8 12/13 length
+		int s = 0,le=bc.length();
+		for (int i = 0; i < le; i++) {
+			int c = Character.getNumericValue(bc.charAt(i));
+			s += c * ( (le-i)%2 == 0? 1: 3);
+		}
+		s = (10 - s % 10) % 10;
+		// Log.w(TAG,"EAN check digit for '" + bc  + "' - " + s);
+		return bc + s;
+	}
 	public void onBarcode(BarcodeReadEvent barcodeReadEvent) {
 		if (promptHelper!=null && promptHelper.promptRequested != null && String.class.equals(promptHelper.promptRequested)) {
 			// call handleMessage in ConsoleActivity -> hide prompts
@@ -1253,16 +1266,23 @@ public class TerminalBridge implements VDUDisplay {
 			promptHelper.setResponse(barcodeReadEvent.getBarcodeData());
 			return;
 		}
-		String prefix = barcodeReadEvent.getAimId(), suffix = getBcPostfix();
+		String prefix = barcodeReadEvent.getAimId(), suffix = getBcPostfix(), codeId, codeData;
 		if(!isBcAimPrefix())prefix ="";
-		if(barcodeReadEvent.getCodeId().equals("I")) { // EAN128
+		codeId = barcodeReadEvent.getCodeId();
+		codeData = barcodeReadEvent.getBarcodeData();
+		if ((codeId.equals("D") && codeData.length()==7) ||
+			(codeId.equals("d") && codeData.length()==12)) {
+			codeData = ean813CheckDigit(codeData);
+			Log.w(TAG,"EAN added check digit - " + codeData);
+		}
+		if(codeId.equals("I")) { // EAN128
 			String x = getSsccPrefix();
 			if (x != null && !x.equals("")) prefix = x;
 			x = getSsccF1();
 			if (x == null) x = ""; else x = unEscape(x);
-			injectString(unEscape(prefix) + barcodeReadEvent.getBarcodeData().replaceAll("\u001d", x) + unEscape(suffix));
+			injectString(unEscape(prefix) + codeData.replaceAll("\u001d", x) + unEscape(suffix));
 		} else {
-			injectString(unEscape(prefix) + barcodeReadEvent.getBarcodeData() + unEscape(suffix));
+			injectString(unEscape(prefix) + codeData + unEscape(suffix));
 		}
 	}
 }
