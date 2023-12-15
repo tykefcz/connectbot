@@ -86,6 +86,8 @@ public final class PreferenceConstants {
 	public static final String YES = "yes";
 	public static final String NO = "no";
 	public static final String ALT = "alt";
+	public static final String BC_ENABLE_DMX = "bcEnableDmx";
+	public static final String BC_ENABLE_QR = "bcEnableQr";
 
 	/* Backup identifiers */
 	public static final String BACKUP_PREF_KEY = "prefs";

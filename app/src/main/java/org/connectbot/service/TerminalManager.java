@@ -28,12 +28,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.prefs.Preferences;
 
-import android.view.KeyEvent;
-import android.view.View;
 import cz.madeta.droidssh.R;
 
-import org.connectbot.TerminalView;
 import org.connectbot.bean.HostBean;
 import org.connectbot.bean.PubkeyBean;
 import org.connectbot.data.ColorStorage;
@@ -69,8 +67,6 @@ import android.os.IBinder;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.Log;
-
-import static de.mud.terminal.vt320.unEscape;
 
 /**
  * Manager for SSH connections that runs as a service. This service holds a list
@@ -133,6 +129,7 @@ public class TerminalManager extends Service implements BridgeDisconnectedListen
 	private static BarcodeReader _bcrd  = null;
 	private static Object bcrdListener = null;
 	private static AidcManager _aidcManager = null;
+	private static boolean _dirtyPrefs = false;
 	static BarcodeReader getBarcodeReader() {
 		if (_bcrd == null && _aidcManager!=null)
 			try {
@@ -144,7 +141,7 @@ public class TerminalManager extends Service implements BridgeDisconnectedListen
 						_bcrd.setProperty(BarcodeReader.PROPERTY_CODE_39_ENABLED, false);
 					} catch (UnsupportedPropertyException pe) {	}
 					try {
-						_bcrd.setProperty(BarcodeReader.PROPERTY_DATAMATRIX_ENABLED, true);
+						_bcrd.setProperty(BarcodeReader.PROPERTY_DATAMATRIX_ENABLED, false);
 					} catch (UnsupportedPropertyException pe) {	}
 					// set the trigger mode to automatic control
 					try {
@@ -157,6 +154,33 @@ public class TerminalManager extends Service implements BridgeDisconnectedListen
 				Log.w(TAG, "Honeywell Aidc.BarcodeReader ex:" + e);
 			}
 		return _bcrd;
+	}
+	// setBarcodeProperty(BarcodeReader.PROPERTY_DATAMATRIX_ENABLED,true)
+	public static void setBarcodeProperty(String property, boolean ena) {
+		if (_bcrd != null) {
+			String prop = property;
+			switch(prop) {
+			case "DATAMATRIX_ENABLED": prop = BarcodeReader.PROPERTY_DATAMATRIX_ENABLED;
+			}
+			try {
+				_bcrd.setProperty(prop, ena);
+				_dirtyPrefs = true;
+			} catch (UnsupportedPropertyException pe) {	}
+		}
+	}
+	public static Boolean getBarcodeProperty(String property) {
+		boolean val=false;
+		String prop = property;
+		switch(prop) {
+			case "DATAMATRIX_ENABLED": prop = BarcodeReader.PROPERTY_DATAMATRIX_ENABLED;
+		}
+		if (_bcrd != null) {
+			try {
+				val=_bcrd.getBooleanProperty(prop);
+				return new Boolean(val);
+			} catch (UnsupportedPropertyException pe) {	}
+		}
+		return null;
 	}
 	// End Honeywell section
 
@@ -208,6 +232,11 @@ public class TerminalManager extends Service implements BridgeDisconnectedListen
 					_aidcManager = aidc;
 					synchronized (_aidcManager) {
 						getBarcodeReader();
+						setBarcodeProperty(BarcodeReader.PROPERTY_DATAMATRIX_ENABLED,
+								prefs.getBoolean(PreferenceConstants.BC_ENABLE_DMX,true));
+						setBarcodeProperty(BarcodeReader.PROPERTY_QR_CODE_ENABLED,
+								prefs.getBoolean(PreferenceConstants.BC_ENABLE_QR,false));
+						_dirtyPrefs =false;
 						bcrdClaim();
 					}
 				}
@@ -242,6 +271,18 @@ public class TerminalManager extends Service implements BridgeDisconnectedListen
 		if (_aidcManager != null) synchronized (_aidcManager) {
 			BarcodeReader bcrd = getBarcodeReader();
 			if (bcrd != null) {
+				if (_dirtyPrefs) {
+					Boolean dmx = getBarcodeProperty(BarcodeReader.PROPERTY_DATAMATRIX_ENABLED),
+							qr = getBarcodeProperty(BarcodeReader.PROPERTY_QR_CODE_ENABLED);
+					if (dmx!=null || qr !=null) {
+						SharedPreferences.Editor ed = prefs.edit();
+						if (dmx!=null)
+							ed.putBoolean(PreferenceConstants.BC_ENABLE_DMX, dmx);
+						if (qr != null)
+							ed.putBoolean(PreferenceConstants.BC_ENABLE_QR, qr);
+						ed.apply();
+					}
+				}
 				if (bcrdListener == this) {
 					try { _bcrd.removeBarcodeListener(this); } catch (Exception e) { };
 					bcrdListener = null;
@@ -249,6 +290,7 @@ public class TerminalManager extends Service implements BridgeDisconnectedListen
 				bcrd.release();
 			}
 		}
+		_dirtyPrefs=false;
 
 		ConnectionNotifier.getInstance().hideRunningNotification(this);
 
@@ -733,6 +775,12 @@ public class TerminalManager extends Service implements BridgeDisconnectedListen
 			connectivityManager.setWantWifiLock(lockingWifi);
 		} else if (PreferenceConstants.MEMKEYS.equals(key)) {
 			updateSavingKeys();
+		} else if (PreferenceConstants.BC_ENABLE_DMX.equals(key)) {
+			setBarcodeProperty(BarcodeReader.PROPERTY_DATAMATRIX_ENABLED,
+					sharedPreferences.getBoolean(PreferenceConstants.BC_ENABLE_DMX, true));
+		} else if (PreferenceConstants.BC_ENABLE_QR.equals(key)) {
+			setBarcodeProperty(BarcodeReader.PROPERTY_QR_CODE_ENABLED,
+					sharedPreferences.getBoolean(PreferenceConstants.BC_ENABLE_QR, false));
 		}
 	}
 

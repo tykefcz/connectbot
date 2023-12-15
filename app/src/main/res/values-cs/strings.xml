@@ -287,4 +287,9 @@
 	<string name="pref_conn_bc_prefixes">AIM Prefixy čár.kódů ([C0,[x#)</string>
 	<string name="pref_conn_ean128_prefix">Prefix EAN128 (SSCC)</string>
   <string name="pref_conn_f1replace">Znak F1 (\\x1d)</string>
+	<string name="enable_bc_dmx">Povolit DMX</string>
+	<string name="disable_bc_dmx">Zakázat DMX</string>
+	<string name="pref_scanner_category">Barcode scanner</string>
+  <string name="pref_bcdmxenable_title">Datamatrix</string>
+  <string name="pref_bcqreanble_title">QR Code</string>
 </resources>

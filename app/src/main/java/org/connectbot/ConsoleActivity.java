@@ -59,14 +59,6 @@ import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import androidx.annotation.Nullable;
 import com.google.android.material.tabs.TabLayout;
-
-import com.honeywell.aidc.AidcManager;
-import com.honeywell.aidc.BarcodeFailureEvent;
-import com.honeywell.aidc.BarcodeReader;
-import com.honeywell.aidc.ScannerNotClaimedException;
-import com.honeywell.aidc.ScannerUnavailableException;
-import com.honeywell.aidc.UnsupportedPropertyException;
-
 import androidx.core.app.ActivityCompat;
 import androidx.core.view.MenuItemCompat;
 import androidx.viewpager.widget.PagerAdapter;
@@ -106,7 +98,13 @@ import android.widget.TextView;
 import de.mud.terminal.vt320;
 
 import static cz.madeta.HonUtils.getSysProp;
-import static de.mud.terminal.vt320.unEscape;
+//import static de.mud.terminal.vt320.unEscape;
+//import com.honeywell.aidc.AidcManager;
+//import com.honeywell.aidc.BarcodeFailureEvent;
+//import com.honeywell.aidc.BarcodeReader;
+//import com.honeywell.aidc.ScannerNotClaimedException;
+//import com.honeywell.aidc.ScannerUnavailableException;
+//import com.honeywell.aidc.UnsupportedPropertyException;
 
 public class ConsoleActivity extends AppCompatActivity implements BridgeDisconnectedListener {
 	public final static String TAG = "CB.ConsoleActivity";
@@ -157,6 +155,7 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 	private MenuItem portForward;
 	private MenuItem resize;
 	private MenuItem urlscan;
+	private MenuItem bcdmxena;
 
 	private boolean forcedOrientation;
 
@@ -994,7 +993,6 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 										// make the input boxes turn red to indicate an error.
 										return;
 									}
-
 									terminalView.forceSize(width, height);
 								}
 							}).setNegativeButton(android.R.string.cancel, null).create().show();
@@ -1002,6 +1000,30 @@ public class ConsoleActivity extends AppCompatActivity implements BridgeDisconne
 				return true;
 			}
 		});
+
+		Boolean ena = TerminalManager.getBarcodeProperty("DATAMATRIX_ENABLED");
+		if (ena != null) {
+			if (ena)
+				bcdmxena = menu.add(R.string.disable_bc_dmx);
+			else
+				bcdmxena = menu.add(R.string.enable_bc_dmx);
+			bcdmxena.setEnabled(true);
+			bcdmxena.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+				public boolean onMenuItemClick(MenuItem item) {
+					Boolean ena = TerminalManager.getBarcodeProperty("DATAMATRIX_ENABLED");
+					if (ena!=null) {
+						boolean eb = ena;
+						eb=!eb;
+						TerminalManager.setBarcodeProperty("DATAMATRIX_ENABLED", eb);
+						if (eb)
+							bcdmxena.setTitle(R.string.disable_bc_dmx);
+						else
+							bcdmxena.setTitle(R.string.enable_bc_dmx);
+					}
+					return true;
+				}
+			});
+		}
 
 		return true;
 	}

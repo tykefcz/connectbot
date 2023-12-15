@@ -175,6 +175,21 @@
 			android:defaultValue="true"
 			/>
 	</PreferenceCategory>
+	<PreferenceCategory
+		android:title="@string/pref_scanner_category">
+
+	<SwitchPreferenceCompat
+		android:key="bcEnableDmx"
+		android:title="@string/pref_bcdmxenable_title"
+		android:defaultValue="true"
+		/>
+
+	<SwitchPreferenceCompat
+		android:key="bcEnableQr"
+		android:title="@string/pref_bcqreanble_title"
+		android:defaultValue="false"
+		/>
+	</PreferenceCategory>
 
 	<PreferenceCategory
 		android:title="@string/pref_bell_category">

@@ -215,6 +215,14 @@ public class HostListActivity extends AppCompatListActivity implements OnHostSta
 				editor.putBoolean(PreferenceConstants.CTRL_FKEYS, true);
 				doCommit = true;
 			}
+			if (!prefs.contains(PreferenceConstants.BC_ENABLE_DMX)) {
+				editor.putBoolean(PreferenceConstants.BC_ENABLE_DMX, true);
+				doCommit = true;
+			}
+			if (!prefs.contains(PreferenceConstants.BC_ENABLE_QR)) {
+				editor.putBoolean(PreferenceConstants.BC_ENABLE_QR, false);
+				doCommit = true;
+			}
 			if (!prefs.contains(PreferenceConstants.STICKY_MODIFIERS)) {
 				editor.putString(PreferenceConstants.STICKY_MODIFIERS, PreferenceConstants.YES);
 				doCommit = true;

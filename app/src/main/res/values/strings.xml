@@ -679,4 +679,9 @@
 	<string name="pref_conn_bc_prefixes">Barcode AIM prefixes ([C0,[x#)</string>
 	<string name="pref_conn_ean128_prefix">EAN128 Prefix</string>
 	<string name="pref_conn_f1replace">F1 Character Replace</string>
+	<string name="enable_bc_dmx">Enable DMX barcode</string>
+	<string name="disable_bc_dmx">Disable DMX barcode</string>
+	<string name="pref_scanner_category">Barcode scanner</string>
+	<string name="pref_bcdmxenable_title">Datamatrix</string>
+	<string name="pref_bcqreanble_title">QR Code</string>
 </resources>
